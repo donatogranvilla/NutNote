@@ -1,0 +1,46 @@
+[package]
+name = "nutnote"
+version = "0.1.0"
+description = "NutNote App"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-fs = "2.0.0-rc.3"
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+uuid = { version = "1.20.0", features = ["v4", "serde"] }
+tauri-plugin-dialog = "2.7.3"
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
+
+[profile.dev]
+debug = 1
+
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+
+[profile.release]
+opt-level = 2
+codegen-units = 1
+debug = false
+strip = true
+
