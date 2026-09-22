@@ -291,8 +291,34 @@ export const searchApi = {
   },
 };
 
+export interface FolderFileInfo {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  size_bytes: number;
+  extension: string;
+  modified_str: string;
+}
+
 export const filesApi = {
   uploadFile: (sourcePath: string) => invoke<{ path: string, filename: string }>('upload_file', { sourcePath }),
+  listDirectory: async (folderPath: string): Promise<FolderFileInfo[]> => {
+    try {
+      return await invoke<FolderFileInfo[]>('list_directory_contents', { folderPath });
+    } catch (e) {
+      console.warn('listDirectory failed or running in browser:', e);
+      return [];
+    }
+  },
+  openPath: async (pathToOpen: string): Promise<boolean> => {
+    try {
+      await invoke('open_path_in_os', { pathToOpen });
+      return true;
+    } catch (e) {
+      console.warn('openPath failed:', e);
+      return false;
+    }
+  },
 };
 
 export const usersApi = {

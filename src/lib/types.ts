@@ -155,7 +155,11 @@ export type BlockType =
   | 'callout'
   | 'toggle'
   | 'database_view'
-  | 'page_reference';
+  | 'page_reference'
+  | 'folder'
+  | 'event'
+  | 'bookmark'
+  | 'vault';
 
 export interface Block {
   id: UUID;

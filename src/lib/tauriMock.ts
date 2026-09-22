@@ -500,12 +500,87 @@ function getDefaultState(): MockState {
         { id: 'b-c2-7', type: 'bulletList', content: { content: [{ type: 'text', text: 'Blocchi di Codice con Syntax Highlighting: evidenziazione per Rust, TypeScript, Python, SQL, HTML, CSS, Bash e JSON.' }] }, position: 6 },
         { id: 'b-c2-8', type: 'bulletList', content: { content: [{ type: 'text', text: 'Callout Informativi: box colorati con emoji personalizzabile per consigli, avvisi o note di attenzione.' }] }, position: 7 },
         { id: 'b-c2-9', type: 'bulletList', content: { content: [{ type: 'text', text: 'Citazioni (Blockquote): formattazione con barra laterale d\'accento per note importanti.' }] }, position: 8 },
-        { id: 'b-c2-10', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.2 Il Comando Slash (/)' }] }, position: 9 },
-        { id: 'b-c2-11', type: 'paragraph', content: { content: [{ type: 'text', text: 'All\'interno di qualsiasi blocco vuoto, digitando il carattere \'/\' si attiva il menu di inserimento rapido (/h1, /h2, /todo, /code, /callout, /quote, /divider).' }] }, position: 10 },
-        { id: 'b-c2-12', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.3 Riordino con Drag & Drop' }] }, position: 11 },
-        { id: 'b-c2-13', type: 'paragraph', content: { content: [{ type: 'text', text: 'Ogni blocco presenta a sinistra una maniglia a sei puntini (Grip Handle). Cliccando e trascinando la maniglia è possibile spostare il blocco in qualsiasi posizione all\'interno del documento.' }] }, position: 12 },
-        { id: 'b-c2-14', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.4 Auto-Save & Debouncing' }] }, position: 13 },
-        { id: 'b-c2-15', type: 'paragraph', content: { content: [{ type: 'text', text: 'Non è necessario premere \'Salva\' costantemente: ogni battuta viene memorizzata in locale e sincronizzata sul backend tramite debouncing (600ms dall\'ultimo input).' }] }, position: 14 },
+        { id: 'b-c2-9b', type: 'bulletList', content: { content: [{ type: 'text', text: 'Cartella / Mini Esplora Risorse: collega una cartella locale o server di rete con apertura diretta in Esplora File.' }] }, position: 9 },
+        { id: 'b-c2-9c', type: 'bulletList', content: { content: [{ type: 'text', text: 'Evento & Calendario (.ics): fissa date e meeting, con countdown interattivo e download del file .ics per Outlook/Google.' }] }, position: 10 },
+        { id: 'b-c2-9d', type: 'bulletList', content: { content: [{ type: 'text', text: 'Segnalibro Web: card ricca con favicon automatica, dominio e link per documentazione esterna.' }] }, position: 11 },
+        { id: 'b-c2-9e', type: 'bulletList', content: { content: [{ type: 'text', text: 'Cassaforte Credenziali: password manager per la nota con valori oscurati anti shoulder-surfing e copia istantanea.' }] }, position: 12 },
+        { id: 'b-c2-10', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.2 Il Comando Slash (/)' }] }, position: 13 },
+        { id: 'b-c2-11', type: 'paragraph', content: { content: [{ type: 'text', text: 'All\'interno di qualsiasi blocco vuoto, digitando il carattere \'/\' si attiva il menu di inserimento rapido (/h1, /h2, /todo, /code, /callout, /quote, /cartella, /evento, /link, /vault).' }] }, position: 14 },
+        { id: 'b-c2-12', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.3 Riordino con Drag & Drop' }] }, position: 15 },
+        { id: 'b-c2-13', type: 'paragraph', content: { content: [{ type: 'text', text: 'Ogni blocco presenta a sinistra una maniglia a sei puntini (Grip Handle). Cliccando e trascinando la maniglia è possibile spostare il blocco in qualsiasi posizione all\'interno del documento.' }] }, position: 16 },
+        { id: 'b-c2-14', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.4 Auto-Save & Debouncing' }] }, position: 17 },
+        { id: 'b-c2-15', type: 'paragraph', content: { content: [{ type: 'text', text: 'Non è necessario premere \'Salva\' costantemente: ogni battuta viene memorizzata in locale e sincronizzata sul backend tramite debouncing (600ms dall\'ultimo input).' }] }, position: 18 },
+        { id: 'b-c2-16', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.5 Blocchi di Utilità Operativa' }] }, position: 19 },
+        { id: 'b-c2-17', type: 'paragraph', content: { content: [{ type: 'text', text: 'NutNote include 4 blocchi avanzati pensati per i flussi di lavoro aziendali e di studio:' }] }, position: 20 },
+        { id: 'b-c2-18', type: 'bulletList', content: { content: [{ type: 'text', text: '1. Cartella Locale / Server (/cartella): visualizza i file di una directory con icone, estensioni, date e pulsante diretto \'Apri Cartella in Esplora Risorse\'.' }] }, position: 21 },
+        { id: 'b-c2-19', type: 'bulletList', content: { content: [{ type: 'text', text: '2. Evento & Calendario (/evento): fissa date e meeting, con calcolo automatico del countdown e download del file standard .ics per Outlook e Google Calendar.' }] }, position: 22 },
+        { id: 'b-c2-20', type: 'bulletList', content: { content: [{ type: 'text', text: '3. Segnalibro Web (/link): genera una card ricca con estrazione favicon, dominio e accesso rapido alla documentazione esterna.' }] }, position: 23 },
+        { id: 'b-c2-21', type: 'bulletList', content: { content: [{ type: 'text', text: '4. Cassaforte Credenziali (/vault): protegge password e secret della nota mascherandoli per evitare sguardi indiscreti, con pulsante mostra/nascondi e copia istantanea.' }] }, position: 24 },
+      ],
+
+      'page-note-1': [
+        { id: 'b-pn1-1', type: 'heading', content: { attrs: { level: 1 }, content: [{ type: 'text', text: 'Verbale Kick-off Meeting & Specifiche Acme' }] }, position: 0 },
+        { id: 'b-pn1-2', type: 'paragraph', content: { content: [{ type: 'text', text: 'Verbale della sessione plenaria con il team direttivo Acme per la definizione del rilascio della nuova piattaforma e-commerce B2B.' }] }, position: 1 },
+        { id: 'b-pn1-3', type: 'callout', content: { attrs: { calloutIcon: '📌' }, text: 'Questa nota include risorse operative interattive: la cartella condivisa dei contratti, la scadenza del collaudo, la documentazione Stripe e le credenziali di test protette.' }, position: 2 },
+        {
+          id: 'b-pn1-4',
+          type: 'folder',
+          content: {
+            text: 'Cartella Contratti & Specifiche',
+            folderPath: '\\\\server-lan\\Progetti\\Acme\\Contratti-2026',
+            folderName: 'Documentazione & Contratti Firmati Acme',
+            cachedFiles: [
+              { name: 'Specifiche_Funzionali_Checkout_v2.pdf', size: 2840500, isDir: false, extension: 'pdf', modified: '2026-09-08' },
+              { name: 'Contratto_Quadro_Fornitura_Firmato.docx', size: 1450200, isDir: false, extension: 'docx', modified: '2026-09-02' },
+              { name: 'Piano_dei_Conti_Gateway_Stripe.xlsx', size: 984000, isDir: false, extension: 'xlsx', modified: '2026-09-05' },
+              { name: 'Schema_Architettura_Cloud.png', size: 3410200, isDir: false, extension: 'png', modified: '2026-09-10' },
+            ]
+          },
+          position: 3
+        },
+        {
+          id: 'b-pn1-5',
+          type: 'event',
+          content: {
+            text: 'Milestone: Collaudo & Rilascio Sandbox Staging',
+            eventDate: '2026-09-30',
+            eventTime: '10:00',
+            eventEndDate: '2026-09-30',
+            eventEndTime: '12:30',
+            eventLocation: 'Microsoft Teams / Sala Riunioni A',
+            eventDesc: 'Sessione di collaudo congiunto del modulo pagamenti multi-valuta e approvazione per la messa in pre-produzione.',
+          },
+          position: 4
+        },
+        {
+          id: 'b-pn1-6',
+          type: 'bookmark',
+          content: {
+            text: 'Documentazione Ufficiale Stripe Checkout',
+            url: 'https://stripe.com/docs/payments/checkout',
+            bookmarkTitle: 'Stripe Payments: Guida all\'Integrazione Checkout & Webhook',
+            bookmarkDesc: 'Specifiche per la ricezione sicura di webhook idempotenti, autenticazione 3D Secure e tokenizzazione delle carte.',
+            bookmarkCategory: 'Documentazione Tecnica Esterna'
+          },
+          position: 5
+        },
+        {
+          id: 'b-pn1-7',
+          type: 'vault',
+          content: {
+            text: 'Credenziali Ambiente Staging & Sandbox',
+            vaultService: 'Portale Sandbox Staging Acme Corp',
+            vaultUsername: 'lead_dev@acme-staging.internal',
+            vaultPassword: 'Acme!Staging2026#SecureKey',
+            vaultUrl: 'https://staging.acme.corp:8443',
+            vaultNotes: 'Ambiente isolato collegato alle sandbox bancarie. Non utilizzare credenziali reali.'
+          },
+          position: 6
+        },
+        { id: 'b-pn1-8', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: 'Azioni Immediate Concordate' }] }, position: 7 },
+        { id: 'b-pn1-9', type: 'taskList', content: { attrs: { checked: true }, content: [{ type: 'text', text: 'Condivisione credenziali sandbox con il team QA' }] }, position: 8 },
+        { id: 'b-pn1-10', type: 'taskList', content: { attrs: { checked: false }, content: [{ type: 'text', text: 'Esecuzione test sui webhook Stripe in ambiente multi-valuta' }] }, position: 9 },
+        { id: 'b-pn1-11', type: 'taskList', content: { attrs: { checked: false }, content: [{ type: 'text', text: 'Importazione promemoria .ics nei calendari di team' }] }, position: 10 },
       ],
 
       'wiki-ch3-relazioni': [

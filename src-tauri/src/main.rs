@@ -110,6 +110,8 @@ fn main() {
             commands::chat::create_chat_message,
             // Files
             commands::files::upload_file,
+            commands::files::list_directory_contents,
+            commands::files::open_path_in_os,
             // Config
             commands::config::get_config,
             commands::config::save_config,

@@ -248,9 +248,13 @@ pub fn seed_wiki_guides(conn: &Connection) -> Result<(), rusqlite::Error> {
         ("blk-c2-10", "bulletList", bullet("Citazioni (Blockquote): formattazione con barra laterale d'accento per note importanti.")),
         ("blk-c2-11", "bulletList", bullet("Separatori Orizzontali (Divider): per separare sezioni tematiche.")),
         ("blk-c2-12", "bulletList", bullet("Immagini: rendering con supporto per didascalie esplicative.")),
+        ("blk-c2-12b", "bulletList", bullet("Cartella Locale / Server (Mini Esplora Risorse): collega una cartella di rete o disco fisso e visualizza file, dimensioni, estensioni e apertura diretta.")),
+        ("blk-c2-12c", "bulletList", bullet("Evento & Calendario (.ics): fissa una data/ora di scadenza o meeting, con countdown interattivo e download del file standard .ics per Outlook e Google Calendar.")),
+        ("blk-c2-12d", "bulletList", bullet("Segnalibro Web & Documentazione: card visiva con favicon automatica, dominio, descrizione e link rapido a documentazione esterna.")),
+        ("blk-c2-12e", "bulletList", bullet("Cassaforte Credenziali & Secret: mini password manager sicuro per la nota con password mascherate anti-shoulder surfing e copia rapida con 1 clic.")),
         ("blk-c2-13", "heading", h2("2.2 Il Comando Slash (/)")),
         ("blk-c2-14", "paragraph", p("All'interno di qualsiasi blocco vuoto, digitando il carattere '/' si attiva il menu di inserimento rapido. È possibile filtrare digitando il nome del blocco desiderato:")),
-        ("blk-c2-15", "code", code("text", "/h1       -> Titolo 1 (Heading 1)\n/h2       -> Titolo 2 (Heading 2)\n/h3       -> Titolo 3 (Heading 3)\n/todo     -> Task list con checkbox\n/bullet   -> Elenco puntato\n/code     -> Blocco di codice con evidenziazione sintassi\n/callout  -> Riquadro informativo con icona\n/quote    -> Citazione\n/divider  -> Linea divisoria")),
+        ("blk-c2-15", "code", code("text", "/h1        -> Titolo 1 (Heading 1)\n/h2        -> Titolo 2 (Heading 2)\n/h3        -> Titolo 3 (Heading 3)\n/todo      -> Task list con checkbox\n/bullet    -> Elenco puntato\n/code      -> Blocco di codice con evidenziazione sintassi\n/callout   -> Riquadro informativo con icona\n/quote     -> Citazione\n/cartella  -> Esplora Risorse / Cartella collegata\n/evento    -> Evento con esportazione .ics per Calendario\n/link      -> Segnalibro Web con favicon e anteprima\n/vault     -> Cassaforte Credenziali e Password protette")),
         ("blk-c2-16", "heading", h2("2.3 Riordino con Drag & Drop")),
         ("blk-c2-17", "paragraph", p("Ogni blocco presenta a sinistra una maniglia a sei puntini (Grip Handle). Cliccando e trascinando la maniglia è possibile spostare il blocco in qualsiasi posizione all'interno del documento con feedback visivo fluido.")),
         ("blk-c2-18", "callout", callout("✨", "Il sistema riordina istantaneamente gli indici di posizione 'position' di tutti i blocchi sottostanti e salva la nuova sequenza in background.")),
@@ -265,6 +269,12 @@ pub fn seed_wiki_guides(conn: &Connection) -> Result<(), rusqlite::Error> {
         ("blk-c2-27", "bulletList", bullet("Digita '```' seguito da invio per un blocco di codice.")),
         ("blk-c2-28", "heading", h2("2.5 Auto-Save & Debouncing")),
         ("blk-c2-29", "paragraph", p("Non è necessario premere 'Salva' costantemente: ogni battuta viene memorizzata in locale e sincronizzata sul backend tramite debouncing (600ms dall'ultimo input), assicurando fluidità e protezione contro la perdita dati.")),
+        ("blk-c2-30", "heading", h2("2.6 Approfondimento sui 4 Blocchi di Utilità Operativa")),
+        ("blk-c2-31", "paragraph", p("NutNote mette a disposizione 4 blocchi interattivi pensati specificamente per l'operatività quotidiana di aziende e studi tecnici:")),
+        ("blk-c2-32", "numbered", numbered("1. Blocco Cartella Locale / Server: permette di inserire un percorso disco (es. 'C:\\Progetti\\ClienteX' o '\\\\Server\\Condivisa'). L'applicazione elenca i file con icone per estensione (PDF, Word, Excel, CAD, Zip), dimensioni e data, con pulsante per aprire direttamente la cartella in Esplora Risorse di Windows.")),
+        ("blk-c2-33", "numbered", numbered("2. Blocco Evento & Calendario (.ics): memorizza data, orario, luogo e note di una consegna o meeting. Include il calcolo dinamico del conto alla rovescia ('Oggi', 'Tra 3 giorni') e un pulsante per scaricare il file standard .ics che si importa istantaneamente in Outlook, Google Calendar e Apple Calendar.")),
+        ("blk-c2-34", "numbered", numbered("3. Blocco Segnalibro Web: genera una scheda interattiva per portali clienti, repository GitHub o specifiche online, caricando automaticamente la favicon del sito e fornendo pulsanti per copiare l'URL o aprire la pagina in una nuova scheda.")),
+        ("blk-c2-35", "numbered", numbered("4. Blocco Cassaforte Credenziali (Mini Password Manager): consente di archiviare username, host e password per quella specifica nota (ad es. credenziali FTP di staging o chiavi API). Le password sono mascherate con pallini per prevenire il shoulder-surfing, con pulsante mostra/nascondi e copia istantanea con feedback visivo.")),
     ];
 
     for (pos, (b_id, b_type, b_content)) in ch2_blocks.into_iter().enumerate() {

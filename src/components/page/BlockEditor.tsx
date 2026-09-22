@@ -14,12 +14,17 @@ import {
   GripVertical, Plus, Trash2, Copy,
   Heading1, Heading2, Heading3, List, ListOrdered,
   CheckSquare, Quote, Code, Minus, Image as ImageIcon,
-  Lightbulb, CheckCircle2, CornerDownLeft, Hash, MoreHorizontal
+  Lightbulb, CheckCircle2, CornerDownLeft, Hash, MoreHorizontal,
+  FolderOpen, Calendar, Globe, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FolderBlock, EventBlock, BookmarkBlock, VaultBlock,
+  type UtilityBlockData
+} from './UtilityBlocks';
 
 // ── Types ──
-interface NotionBlock {
+interface NotionBlock extends UtilityBlockData {
   id: string;
   type: string;
   text: string;
@@ -42,7 +47,7 @@ function blocksToNotion(blocks: Block[]): NotionBlock[] {
   if (!blocks || blocks.length === 0) return [{ id: uuidv4(), type: 'paragraph', text: '' }];
 
   return blocks.map(b => {
-    const c = b.content || {};
+    const c = (b.content || {}) as Record<string, any>;
     let text = '';
     let level = 1;
     let checked = false;
@@ -71,7 +76,33 @@ function blocksToNotion(blocks: Block[]): NotionBlock[] {
     else if (type === 'codeBlock') type = 'code';
     else if (type === 'blockquote') type = 'quote';
 
-    return { id: b.id || uuidv4(), type, text, level, checked, src, language, calloutIcon };
+    // Utility blocks fields extraction
+    const folderPath = c.folderPath || (c.attrs && c.attrs.folderPath) || '';
+    const folderName = c.folderName || (c.attrs && c.attrs.folderName) || '';
+    const cachedFiles = c.cachedFiles || (c.attrs && c.attrs.cachedFiles) || [];
+    const eventDate = c.eventDate || (c.attrs && c.attrs.eventDate) || '';
+    const eventTime = c.eventTime || (c.attrs && c.attrs.eventTime) || '';
+    const eventEndDate = c.eventEndDate || (c.attrs && c.attrs.eventEndDate) || '';
+    const eventEndTime = c.eventEndTime || (c.attrs && c.attrs.eventEndTime) || '';
+    const eventLocation = c.eventLocation || (c.attrs && c.attrs.eventLocation) || '';
+    const eventDesc = c.eventDesc || (c.attrs && c.attrs.eventDesc) || '';
+    const url = c.url || (c.attrs && c.attrs.url) || '';
+    const bookmarkTitle = c.bookmarkTitle || (c.attrs && c.attrs.bookmarkTitle) || '';
+    const bookmarkDesc = c.bookmarkDesc || (c.attrs && c.attrs.bookmarkDesc) || '';
+    const bookmarkCategory = c.bookmarkCategory || (c.attrs && c.attrs.bookmarkCategory) || '';
+    const vaultService = c.vaultService || (c.attrs && c.attrs.vaultService) || '';
+    const vaultUsername = c.vaultUsername || (c.attrs && c.attrs.vaultUsername) || '';
+    const vaultPassword = c.vaultPassword || (c.attrs && c.attrs.vaultPassword) || '';
+    const vaultUrl = c.vaultUrl || (c.attrs && c.attrs.vaultUrl) || '';
+    const vaultNotes = c.vaultNotes || (c.attrs && c.attrs.vaultNotes) || '';
+
+    return {
+      id: b.id || uuidv4(), type, text, level, checked, src, language, calloutIcon,
+      folderPath, folderName, cachedFiles,
+      eventDate, eventTime, eventEndDate, eventEndTime, eventLocation, eventDesc,
+      url, bookmarkTitle, bookmarkDesc, bookmarkCategory,
+      vaultService, vaultUsername, vaultPassword, vaultUrl, vaultNotes,
+    };
   });
 }
 
@@ -109,6 +140,40 @@ function notionToBlocks(items: NotionBlock[], pageId: string): { blocks: Block[]
       content = { attrs: { src: item.src || '' }, caption: item.text };
     } else if (type === 'divider') {
       content = {};
+    } else if (type === 'folder') {
+      content = {
+        text: item.text || item.folderName || 'Cartella Collegata',
+        folderPath: item.folderPath || '',
+        folderName: item.folderName || '',
+        cachedFiles: item.cachedFiles || [],
+      };
+    } else if (type === 'event') {
+      content = {
+        text: item.text || 'Evento',
+        eventDate: item.eventDate || '',
+        eventTime: item.eventTime || '',
+        eventEndDate: item.eventEndDate || '',
+        eventEndTime: item.eventEndTime || '',
+        eventLocation: item.eventLocation || '',
+        eventDesc: item.eventDesc || '',
+      };
+    } else if (type === 'bookmark') {
+      content = {
+        text: item.text || item.bookmarkTitle || item.url || 'Segnalibro Web',
+        url: item.url || '',
+        bookmarkTitle: item.bookmarkTitle || '',
+        bookmarkDesc: item.bookmarkDesc || '',
+        bookmarkCategory: item.bookmarkCategory || '',
+      };
+    } else if (type === 'vault') {
+      content = {
+        text: item.text || item.vaultService || 'Credenziali Protette',
+        vaultService: item.vaultService || '',
+        vaultUsername: item.vaultUsername || '',
+        vaultPassword: item.vaultPassword || '',
+        vaultUrl: item.vaultUrl || '',
+        vaultNotes: item.vaultNotes || '',
+      };
     } else {
       type = 'paragraph';
       content = { content: [{ type: 'text', text: item.text }] };
@@ -138,6 +203,10 @@ const SLASH_CMDS = [
   { type: 'code', label: 'Blocco di Codice', icon: <Code size={16} />, keys: ['code', 'codice'] },
   { type: 'divider', label: 'Linea Divisoria', icon: <Minus size={16} />, keys: ['divider', 'linea'] },
   { type: 'image', label: 'Immagine', icon: <ImageIcon size={16} />, keys: ['image', 'immagine'] },
+  { type: 'folder', label: 'Cartella / Esplora Risorse', icon: <FolderOpen size={16} color="var(--warning, #f59f00)" />, keys: ['cartella', 'folder', 'esplora', 'file', 'disco', 'explorer'] },
+  { type: 'event', label: 'Evento & Calendario (.ics)', icon: <Calendar size={16} color="var(--accent)" />, keys: ['evento', 'event', 'calendario', 'data', 'scadenza', 'ics', 'meeting'] },
+  { type: 'bookmark', label: 'Segnalibro & Link Web', icon: <Globe size={16} color="#20c997" />, keys: ['link', 'segnalibro', 'bookmark', 'url', 'web', 'sito', 'doc'] },
+  { type: 'vault', label: 'Cassaforte Password & Secret', icon: <ShieldCheck size={16} color="#fab005" />, keys: ['vault', 'password', 'credenziali', 'secret', 'chiave', 'login', 'token'] },
 ];
 
 // ── Editor Component ──
@@ -572,6 +641,38 @@ function BlockRow({ item, index, editable, shouldFocus, onFocused, onUpdate, onI
                 style={{ ...textStyle, fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}
               />
             </div>
+          )}
+
+          {item.type === 'folder' && (
+            <FolderBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {item.type === 'event' && (
+            <EventBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {item.type === 'bookmark' && (
+            <BookmarkBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {item.type === 'vault' && (
+            <VaultBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
           )}
 
           {/* Slash Palette Popup */}
