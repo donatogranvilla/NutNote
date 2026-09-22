@@ -7,9 +7,10 @@ import { BlockEditor } from '../components/page/BlockEditor';
 import { PropertiesPanel } from '../components/page/PropertiesPanel';
 import { RelationsPanel } from '../components/page/RelationsPanel';
 import { exportPageToPdf, exportPageToDocx, exportPageToMarkdown } from '../lib/export';
+import { readMarkdownFile } from '../lib/importMarkdown';
 import { 
   Star, MoreHorizontal, ChevronRight, ChevronLeft, ChevronDown, Plus, Trash2, 
-  Archive, FileDown, Image as ImageIcon, Smile, 
+  Archive, FileDown, FileUp, Image as ImageIcon, Smile, 
   FolderPlus, AlertCircle, ArrowLeft, Eye, EyeOff, MessageSquare, History,
   Copy, Check, Sliders, Link as LinkIcon, BookOpen
 } from 'lucide-react';
@@ -218,6 +219,92 @@ export default function PageDetailPage() {
   const currentStatusDef = Array.isArray(pageType?.statusFlow)
     ? pageType.statusFlow.find(s => s.value === page.status)
     : undefined;
+
+  // 1. Official Wiki Manual Chapters
+  const isOfficialWikiHub = page?.id === 'wiki-hub';
+  const officialChapterIndex = WIKI_CHAPTERS.findIndex(c => c.id === page?.id);
+  const isOfficialChapter = officialChapterIndex !== -1;
+
+  // 2. Dynamic Collection / Sibling Navigation for ANY parent-child note hierarchy
+  const siblings = (parentData?.children || []).filter(s => !s.isArchived);
+  const parentPage = parentData?.page;
+  const currentSiblingIndex = siblings.findIndex(s => s.id === page?.id);
+  const hasSiblings = !!page?.parentId && siblings.length > 1 && currentSiblingIndex !== -1;
+
+  // 3. Collection Hub with Children (Parent Note)
+  const validChildren = children.filter(c => !c.isArchived);
+  const hasChildren = validChildren.length > 0;
+
+  const markdownInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportMarkdown = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    try {
+      const parsed = await readMarkdownFile(file);
+      const newBlocks = parsed.blocks.map((pb, idx) => {
+        let type = pb.type;
+        let content: Record<string, unknown> = { text: pb.text };
+        if (type === 'heading1' || type === 'heading2' || type === 'heading3') {
+          type = 'heading';
+          content = { attrs: { level: pb.level || 1 }, content: [{ type: 'text', text: pb.text }] };
+        } else if (type === 'todo') {
+          type = 'taskList';
+          content = { attrs: { checked: !!pb.checked }, content: [{ type: 'text', text: pb.text }] };
+        } else if (type === 'bullet') {
+          type = 'bulletList';
+          content = { content: [{ type: 'text', text: pb.text }] };
+        } else if (type === 'numbered') {
+          type = 'orderedList';
+          content = { content: [{ type: 'text', text: pb.text }] };
+        } else if (type === 'quote') {
+          type = 'blockquote';
+          content = { content: [{ type: 'text', text: pb.text }] };
+        } else if (type === 'code') {
+          type = 'codeBlock';
+          content = { attrs: { language: pb.language || 'text' }, content: [{ type: 'text', text: pb.text }] };
+        } else if (type === 'callout') {
+          content = { attrs: { calloutIcon: pb.calloutIcon || '💡' }, text: pb.text };
+        } else if (type === 'mermaid') {
+          content = { text: pb.text, mermaidCode: pb.mermaidCode || '', mermaidTitle: pb.mermaidTitle || '' };
+        } else if (type === 'divider') {
+          content = {};
+        } else {
+          type = 'paragraph';
+          content = { content: [{ type: 'text', text: pb.text }] };
+        }
+
+        return {
+          id: pb.id,
+          pageId: id,
+          parentBlockId: null,
+          type: type as any,
+          content,
+          position: idx,
+          createdAt: '',
+          updatedAt: '',
+        };
+      });
+
+      saveBlocks.mutate({
+        pageId: id,
+        blocks: newBlocks,
+        userId: '123e4567-e89b-12d3-a456-426614174000',
+        plainText: parsed.blocks.map(b => b.text).join(' ')
+      });
+
+      if (parsed.title && page && (page.title.startsWith('Nuov') || page.title === 'Senza Titolo')) {
+        updatePage.mutate({ request: { id, title: parsed.title } });
+      }
+
+      alert(`Importati con successo ${newBlocks.length} blocchi dal file "${file.name}"!`);
+    } catch (err: any) {
+      console.error('Failed to import markdown:', err);
+      alert('Errore importazione Markdown: ' + (err.message || 'File non valido'));
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
 
   return (
     <div style={{ paddingBottom: 'var(--sp-12)' }}>
@@ -436,6 +523,24 @@ export default function PageDetailPage() {
                   </button>
 
                   <div style={{ height: '1px', backgroundColor: 'var(--border)', margin: '4px 0' }} />
+                  <div style={{ padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Importa Documento
+                  </div>
+                  <button 
+                    onClick={() => { markdownInputRef.current?.click(); setShowActionsMenu(false); }}
+                    style={menuItemStyle}
+                  >
+                    <FileUp size={15} color="var(--accent)" /> Importa File Markdown (.md)
+                  </button>
+                  <input
+                    type="file"
+                    ref={markdownInputRef}
+                    accept=".md,.markdown,.txt"
+                    style={{ display: 'none' }}
+                    onChange={handleImportMarkdown}
+                  />
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--border)', margin: '4px 0' }} />
 
                   <button 
                     onClick={() => { handleCopyPageId(page.id); setShowActionsMenu(false); }}
@@ -506,6 +611,30 @@ export default function PageDetailPage() {
                 Chiudi
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Book / Collection Context Indicator Badge */}
+        {(isOfficialChapter || (hasSiblings && parentPage)) && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 12px',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'rgba(66, 99, 235, 0.08)',
+            border: '1px solid rgba(66, 99, 235, 0.2)',
+            color: 'var(--accent)',
+            fontSize: '12px',
+            fontWeight: 600,
+            marginBottom: 'var(--sp-3)',
+          }}>
+            <BookOpen size={13} />
+            <span>
+              {isOfficialChapter
+                ? `Manuale Ufficiale NutNote • Capitolo ${WIKI_CHAPTERS[officialChapterIndex].num} di ${WIKI_CHAPTERS.length}`
+                : `Raccolta Documentale: ${parentPage ? parentPage.title : ''} • Capitolo ${currentSiblingIndex + 1} di ${siblings.length}`}
+            </span>
           </div>
         )}
 

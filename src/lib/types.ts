@@ -159,7 +159,9 @@ export type BlockType =
   | 'folder'
   | 'event'
   | 'bookmark'
-  | 'vault';
+  | 'vault'
+  | 'mermaid'
+  | 'calcTable';
 
 export interface Block {
   id: UUID;

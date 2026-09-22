@@ -35,6 +35,7 @@
     "date-fns": "^4.4.0",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.38.0",
+    "mermaid": "^12.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",

@@ -510,12 +510,15 @@ function getDefaultState(): MockState {
         { id: 'b-c2-13', type: 'paragraph', content: { content: [{ type: 'text', text: 'Ogni blocco presenta a sinistra una maniglia a sei puntini (Grip Handle). Cliccando e trascinando la maniglia è possibile spostare il blocco in qualsiasi posizione all\'interno del documento.' }] }, position: 16 },
         { id: 'b-c2-14', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.4 Auto-Save & Debouncing' }] }, position: 17 },
         { id: 'b-c2-15', type: 'paragraph', content: { content: [{ type: 'text', text: 'Non è necessario premere \'Salva\' costantemente: ogni battuta viene memorizzata in locale e sincronizzata sul backend tramite debouncing (600ms dall\'ultimo input).' }] }, position: 18 },
-        { id: 'b-c2-16', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.5 Blocchi di Utilità Operativa' }] }, position: 19 },
-        { id: 'b-c2-17', type: 'paragraph', content: { content: [{ type: 'text', text: 'NutNote include 4 blocchi avanzati pensati per i flussi di lavoro aziendali e di studio:' }] }, position: 20 },
+        { id: 'b-c2-16', type: 'heading', content: { attrs: { level: 2 }, content: [{ type: 'text', text: '2.5 I 7 Blocchi di Utilità Operativa' }] }, position: 19 },
+        { id: 'b-c2-17', type: 'paragraph', content: { content: [{ type: 'text', text: 'NutNote include 7 blocchi avanzati pensati per i flussi di lavoro aziendali, tecnici e di studio:' }] }, position: 20 },
         { id: 'b-c2-18', type: 'bulletList', content: { content: [{ type: 'text', text: '1. Cartella Locale / Server (/cartella): visualizza i file di una directory con icone, estensioni, date e pulsante diretto \'Apri Cartella in Esplora Risorse\'.' }] }, position: 21 },
         { id: 'b-c2-19', type: 'bulletList', content: { content: [{ type: 'text', text: '2. Evento & Calendario (/evento): fissa date e meeting, con calcolo automatico del countdown e download del file standard .ics per Outlook e Google Calendar.' }] }, position: 22 },
         { id: 'b-c2-20', type: 'bulletList', content: { content: [{ type: 'text', text: '3. Segnalibro Web (/link): genera una card ricca con estrazione favicon, dominio e accesso rapido alla documentazione esterna.' }] }, position: 23 },
         { id: 'b-c2-21', type: 'bulletList', content: { content: [{ type: 'text', text: '4. Cassaforte Credenziali (/vault): protegge password e secret della nota mascherandoli per evitare sguardi indiscreti, con pulsante mostra/nascondi e copia istantanea.' }] }, position: 24 },
+        { id: 'b-c2-22', type: 'bulletList', content: { content: [{ type: 'text', text: '5. Diagrammi Mermaid (/mermaid): genera flowchart, sequenze API e roadmap partendo da codice testuale, con download immediato in formato vettoriale SVG.' }] }, position: 25 },
+        { id: 'b-c2-23', type: 'bulletList', content: { content: [{ type: 'text', text: '6. Tabella Calcolata (/calc): mini spreadsheet con colonne numeriche e valuta, formule e somme automatiche per preventivi veloci con export CSV.' }] }, position: 26 },
+        { id: 'b-c2-24', type: 'bulletList', content: { content: [{ type: 'text', text: '7. Vista Database Incorporata (/query): incorpora nel corpo della nota una tabella dinamica che filtra in tempo reale le pagine e i task del workspace.' }] }, position: 27 },
       ],
 
       'page-note-1': [
@@ -581,6 +584,42 @@ function getDefaultState(): MockState {
         { id: 'b-pn1-9', type: 'taskList', content: { attrs: { checked: true }, content: [{ type: 'text', text: 'Condivisione credenziali sandbox con il team QA' }] }, position: 8 },
         { id: 'b-pn1-10', type: 'taskList', content: { attrs: { checked: false }, content: [{ type: 'text', text: 'Esecuzione test sui webhook Stripe in ambiente multi-valuta' }] }, position: 9 },
         { id: 'b-pn1-11', type: 'taskList', content: { attrs: { checked: false }, content: [{ type: 'text', text: 'Importazione promemoria .ics nei calendari di team' }] }, position: 10 },
+        {
+          id: 'b-pn1-12',
+          type: 'mermaid',
+          content: {
+            text: 'Pipeline di Rilascio CI/CD Acme',
+            mermaidTitle: 'Pipeline di Rilascio & Testing CI/CD Acme',
+            mermaidCode: `graph TD
+    A[Push su Branch Release] --> B[Test Unitari & Build Tauri]
+    B --> C{Collaudo Superato?}
+    C -->|Sì| D[Generazione Pacchetto MSI / AppImage]
+    C -->|No| E[Segnalazione Bug & Notifica Chat]
+    D --> F[Deploy su Server Staging Acme]`
+          },
+          position: 11
+        },
+        {
+          id: 'b-pn1-13',
+          type: 'calcTable',
+          content: {
+            text: 'Preventivo & Stima Economica Sprint 1',
+            calcTitle: 'Preventivo & Stima Economica Sprint 1',
+            showTotalRow: true,
+            columns: [
+              { id: 'c1', name: 'Voce di Lavoro', type: 'text' },
+              { id: 'c2', name: 'Ore', type: 'number' },
+              { id: 'c3', name: 'Tariffa/h (€)', type: 'currency' },
+              { id: 'c4', name: 'Subtotale (€)', type: 'currency', formula: 'c2*c3' },
+            ],
+            rows: [
+              { id: 'r1', values: { c1: 'Sviluppo Backend Rust & SQLite', c2: 32, c3: 65, c4: 2080 } },
+              { id: 'r2', values: { c1: 'Frontend React & TipTap Editor', c2: 24, c3: 60, c4: 1440 } },
+              { id: 'r3', values: { c1: 'Testing LAN & Rilascio Collaudo', c2: 12, c3: 55, c4: 660 } },
+            ]
+          },
+          position: 12
+        },
       ],
 
       'wiki-ch3-relazioni': [

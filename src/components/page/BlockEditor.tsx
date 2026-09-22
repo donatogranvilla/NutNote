@@ -15,16 +15,20 @@ import {
   Heading1, Heading2, Heading3, List, ListOrdered,
   CheckSquare, Quote, Code, Minus, Image as ImageIcon,
   Lightbulb, CheckCircle2, CornerDownLeft, Hash, MoreHorizontal,
-  FolderOpen, Calendar, Globe, ShieldCheck
+  FolderOpen, Calendar, Globe, ShieldCheck, GitBranch, Calculator, Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FolderBlock, EventBlock, BookmarkBlock, VaultBlock,
   type UtilityBlockData
 } from './UtilityBlocks';
+import {
+  MermaidBlock, CalcTableBlock, DatabaseQueryBlock,
+  type MermaidBlockData, type CalcTableBlockData, type DatabaseQueryBlockData,
+} from './AdvancedBlocks';
 
 // ── Types ──
-interface NotionBlock extends UtilityBlockData {
+interface NotionBlock extends UtilityBlockData, MermaidBlockData, CalcTableBlockData, DatabaseQueryBlockData {
   id: string;
   type: string;
   text: string;
@@ -96,12 +100,27 @@ function blocksToNotion(blocks: Block[]): NotionBlock[] {
     const vaultUrl = c.vaultUrl || (c.attrs && c.attrs.vaultUrl) || '';
     const vaultNotes = c.vaultNotes || (c.attrs && c.attrs.vaultNotes) || '';
 
+    // Advanced blocks fields extraction
+    const mermaidCode = c.mermaidCode || (c.attrs && c.attrs.mermaidCode) || '';
+    const mermaidTitle = c.mermaidTitle || (c.attrs && c.attrs.mermaidTitle) || '';
+    const calcTitle = c.calcTitle || (c.attrs && c.attrs.calcTitle) || '';
+    const columns = c.columns || (c.attrs && c.attrs.columns) || [];
+    const rows = c.rows || (c.attrs && c.attrs.rows) || [];
+    const showTotalRow = c.showTotalRow !== undefined ? c.showTotalRow : (c.attrs && c.attrs.showTotalRow);
+    const queryTypeId = c.queryTypeId || (c.attrs && c.attrs.queryTypeId) || '';
+    const queryStatus = c.queryStatus || (c.attrs && c.attrs.queryStatus) || '';
+    const queryLimit = c.queryLimit || (c.attrs && c.attrs.queryLimit) || 20;
+    const queryTitle = c.queryTitle || (c.attrs && c.attrs.queryTitle) || '';
+
     return {
       id: b.id || uuidv4(), type, text, level, checked, src, language, calloutIcon,
       folderPath, folderName, cachedFiles,
       eventDate, eventTime, eventEndDate, eventEndTime, eventLocation, eventDesc,
       url, bookmarkTitle, bookmarkDesc, bookmarkCategory,
       vaultService, vaultUsername, vaultPassword, vaultUrl, vaultNotes,
+      mermaidCode, mermaidTitle,
+      calcTitle, columns, rows, showTotalRow,
+      queryTypeId, queryStatus, queryLimit, queryTitle,
     };
   });
 }
@@ -174,6 +193,28 @@ function notionToBlocks(items: NotionBlock[], pageId: string): { blocks: Block[]
         vaultUrl: item.vaultUrl || '',
         vaultNotes: item.vaultNotes || '',
       };
+    } else if (type === 'mermaid') {
+      content = {
+        text: item.text || item.mermaidTitle || 'Diagramma Mermaid',
+        mermaidCode: item.mermaidCode || '',
+        mermaidTitle: item.mermaidTitle || '',
+      };
+    } else if (type === 'calcTable') {
+      content = {
+        text: item.text || item.calcTitle || 'Tabella Calcolata',
+        calcTitle: item.calcTitle || '',
+        columns: item.columns || [],
+        rows: item.rows || [],
+        showTotalRow: item.showTotalRow !== undefined ? item.showTotalRow : true,
+      };
+    } else if (type === 'database_view') {
+      content = {
+        text: item.text || item.queryTitle || 'Vista Database Dinamica',
+        queryTitle: item.queryTitle || '',
+        queryTypeId: item.queryTypeId || '',
+        queryStatus: item.queryStatus || '',
+        queryLimit: item.queryLimit || 20,
+      };
     } else {
       type = 'paragraph';
       content = { content: [{ type: 'text', text: item.text }] };
@@ -207,6 +248,9 @@ const SLASH_CMDS = [
   { type: 'event', label: 'Evento & Calendario (.ics)', icon: <Calendar size={16} color="var(--accent)" />, keys: ['evento', 'event', 'calendario', 'data', 'scadenza', 'ics', 'meeting'] },
   { type: 'bookmark', label: 'Segnalibro & Link Web', icon: <Globe size={16} color="#20c997" />, keys: ['link', 'segnalibro', 'bookmark', 'url', 'web', 'sito', 'doc'] },
   { type: 'vault', label: 'Cassaforte Password & Secret', icon: <ShieldCheck size={16} color="#fab005" />, keys: ['vault', 'password', 'credenziali', 'secret', 'chiave', 'login', 'token'] },
+  { type: 'mermaid', label: 'Diagramma Mermaid (Flowchart & Schemi)', icon: <GitBranch size={16} color="#6366f1" />, keys: ['mermaid', 'diagram', 'flowchart', 'schema', 'albero', 'grafo'] },
+  { type: 'calcTable', label: 'Tabella Calcolata (Preventivi & Formule)', icon: <Calculator size={16} color="#10b981" />, keys: ['calc', 'tabella', 'preventivo', 'computo', 'formule', 'somma', 'foglio'] },
+  { type: 'database_view', label: 'Vista Database Incorporata (Filtra Pagine)', icon: <Database size={16} color="#f59f00" />, keys: ['query', 'database', 'vista', 'filtro', 'pagine', 'task'] },
 ];
 
 // ── Editor Component ──
@@ -669,6 +713,30 @@ function BlockRow({ item, index, editable, shouldFocus, onFocused, onUpdate, onI
 
           {item.type === 'vault' && (
             <VaultBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {item.type === 'mermaid' && (
+            <MermaidBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {item.type === 'calcTable' && (
+            <CalcTableBlock
+              item={item}
+              editable={editable}
+              onUpdate={onUpdate}
+            />
+          )}
+
+          {item.type === 'database_view' && (
+            <DatabaseQueryBlock
               item={item}
               editable={editable}
               onUpdate={onUpdate}
