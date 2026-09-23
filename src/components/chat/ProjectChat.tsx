@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatApi, usersApi } from '../../lib/api';
+import { leggiRiferimento } from '../../lib/deepLink';
+import { PastigliaRiferimento } from '../page/RiferimentiInterni';
 import { useUser, UserData } from '../../contexts/UserContext';
 import { Send, Hash, MessageSquare, AtSign } from 'lucide-react';
 
@@ -168,31 +170,13 @@ export function ProjectChat({ pageId }: { pageId: string }) {
             </React.Fragment>
           );
         }
-      } else if (word.startsWith('nutnote://block/') || word.startsWith('nution://block/')) {
-        const parts = word.split('/');
-        if (parts.length >= 5) {
-          const targetPageId = parts[3];
-          const blockId = parts[4];
-          return (
-            <a 
-              key={i} 
-              href={`/page/${targetPageId}?block=${blockId}`} 
-              style={{
-                color: 'var(--accent)',
-                textDecoration: 'underline',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-                fontWeight: 600,
-                backgroundColor: 'var(--bg-surface)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <Hash size={12} /> Referenza Blocco
-            </a>
-          );
+      } else {
+        // Il riconoscimento dei riferimenti sta in lib/deepLink: prima era
+        // riscritto qui dentro, ed era l'unico punto dell'applicazione in cui
+        // un indirizzo nutnote:// veniva capito.
+        const riferimento = leggiRiferimento(word);
+        if (riferimento) {
+          return <PastigliaRiferimento key={i} riferimento={riferimento} />;
         }
       }
       return <span key={i}>{word}</span>;

@@ -26,6 +26,8 @@ import {
   MermaidBlock, CalcTableBlock, DatabaseQueryBlock,
   type MermaidBlockData, type CalcTableBlockData, type DatabaseQueryBlockData,
 } from './AdvancedBlocks';
+import { RiferimentiInterni } from './RiferimentiInterni';
+import { riferimentoBlocco } from '../../lib/deepLink';
 
 // ── Types ──
 interface NotionBlock extends UtilityBlockData, MermaidBlockData, CalcTableBlockData, DatabaseQueryBlockData {
@@ -468,7 +470,7 @@ function BlockRow({ item, index, editable, shouldFocus, onFocused, onUpdate, onI
   };
 
   const copyBlockLink = () => {
-    const link = `nutnote://block/${pageId}/${item.id}`;
+    const link = riferimentoBlocco(pageId, item.id);
     navigator.clipboard.writeText(link).catch(err => {
       console.error('Failed to copy text: ', err);
     });
@@ -754,6 +756,11 @@ function BlockRow({ item, index, editable, shouldFocus, onFocused, onUpdate, onI
               onUpdate={onUpdate}
             />
           )}
+
+          {/* Riferimenti interni contenuti nel testo del blocco: essendo il
+              blocco un'area di testo modificabile, i collegamenti non possono
+              stare al suo interno e compaiono qui sotto. */}
+          <RiferimentiInterni testo={item.text} />
 
           {/* Slash Palette Popup */}
           {slash !== null && <SlashPalette query={slash} onSelect={selectSlash} onClose={() => setSlash(null)} />}
