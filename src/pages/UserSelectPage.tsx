@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { usersApi, teamsApi } from '../lib/api';
 import { useUser, UserData } from '../contexts/UserContext';
 import { Team } from '../lib/types';
 import { Plus, Shield, Users, KeyRound, Lock, Eye, EyeOff, AlertCircle, Check, Server } from 'lucide-react';
@@ -58,8 +58,8 @@ export default function UserSelectPage() {
     setIsLoading(true);
     try {
       const [usersData, teamsData] = await Promise.all([
-        invoke<UserData[]>('get_users'),
-        invoke<Team[]>('get_teams'),
+        usersApi.getAll(),
+        teamsApi.getAll(),
       ]);
       setUsers(usersData);
       setTeams(teamsData);
@@ -101,14 +101,12 @@ export default function UserSelectPage() {
     setCreateError('');
 
     try {
-      const user = await invoke<UserData>('create_user', {
-        payload: {
-          displayName: newName.trim(),
-          avatarColor: newColor,
-          password: newPassword.trim() || '1234',
-          role: newRole,
-          teamId: newTeamId ? newTeamId : null,
-        },
+      const user = await usersApi.create({
+        displayName: newName.trim(),
+        avatarColor: newColor,
+        password: newPassword.trim() || '1234',
+        role: newRole,
+        teamId: newTeamId ? newTeamId : null,
       });
 
       // Login directly with the new user
@@ -144,7 +142,7 @@ export default function UserSelectPage() {
             borderRadius: '8px', color: 'var(--text-secondary)',
             fontSize: '13px', fontWeight: 500, cursor: 'pointer',
             boxShadow: 'var(--shadow-sm)',
-            transition: 'all 0.15s ease',
+            transition: 'var(--transition-interactive)',
           }}
           title="Configura Rete, Archiviazione o Server NutNote"
         >
@@ -202,7 +200,7 @@ export default function UserSelectPage() {
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'var(--transition-interactive)',
               position: 'relative',
             }}
             onMouseEnter={(e) => {
@@ -311,7 +309,7 @@ export default function UserSelectPage() {
             backgroundColor: 'transparent',
             border: '2px dashed var(--border)',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: 'var(--transition-interactive)',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'var(--accent)';
@@ -352,7 +350,7 @@ export default function UserSelectPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: 'var(--z-modal)',
           padding: '1rem',
         }}>
           <div style={{
@@ -514,7 +512,7 @@ export default function UserSelectPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: 'var(--z-modal)',
           padding: '1rem',
         }}>
           <div style={{

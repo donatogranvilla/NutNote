@@ -133,11 +133,10 @@ pub async fn get_users(
     get_users_internal(&conn)
 }
 
-#[tauri::command]
-pub async fn get_all_users_admin(
-    state: State<'_, DbState>,
+/// Elenco completo con password in chiaro, per il pannello di amministrazione.
+pub fn get_all_users_admin_internal(
+    conn: &rusqlite::Connection,
 ) -> Result<Vec<UserWithPassword>, String> {
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn.prepare(
         "SELECT u.id, u.display_name, u.avatar_color, u.role, u.password, u.team_id, t.name, t.color, u.created_at
          FROM users u
@@ -163,6 +162,14 @@ pub async fn get_all_users_admin(
 }
 
 #[tauri::command]
+pub async fn get_all_users_admin(
+    state: State<'_, DbState>,
+) -> Result<Vec<UserWithPassword>, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    get_all_users_admin_internal(&conn)
+}
+
+#[tauri::command]
 pub async fn authenticate_user(
     payload: AuthPayload,
     state: State<'_, DbState>,
@@ -176,12 +183,12 @@ pub async fn authenticate_user(
     Ok(user)
 }
 
-#[tauri::command]
-pub async fn create_user(
+/// Crea un profilo. Password e ruolo hanno valori di ripiego perché la creazione
+/// rapida dalla schermata di scelta profilo non li chiede.
+pub fn create_user_internal(
+    conn: &rusqlite::Connection,
     payload: CreateUserPayload,
-    state: State<'_, DbState>,
 ) -> Result<UserData, String> {
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
     let id = Uuid::new_v4().to_string();
     let avatar_color = payload.avatar_color.unwrap_or_else(|| "#4263eb".to_string());
     let password = payload.password.unwrap_or_else(|| "1234".to_string());
@@ -227,11 +234,20 @@ pub async fn create_user(
 }
 
 #[tauri::command]
-pub async fn update_user_password(
-    payload: UpdatePasswordPayload,
+pub async fn create_user(
+    payload: CreateUserPayload,
     state: State<'_, DbState>,
-) -> Result<(), String> {
+) -> Result<UserData, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    create_user_internal(&conn, payload)
+}
+
+/// Imposta una nuova password senza verificare la precedente: il ripristino
+/// avviene dal pannello di amministrazione, non dall'utente stesso.
+pub fn update_user_password_internal(
+    conn: &rusqlite::Connection,
+    payload: UpdatePasswordPayload,
+) -> Result<(), String> {
     conn.execute(
         "UPDATE users SET password = ?1 WHERE id = ?2",
         params![payload.new_password, payload.user_id],
@@ -240,11 +256,19 @@ pub async fn update_user_password(
 }
 
 #[tauri::command]
-pub async fn update_user(
-    payload: UpdateUserPayload,
+pub async fn update_user_password(
+    payload: UpdatePasswordPayload,
     state: State<'_, DbState>,
-) -> Result<UserData, String> {
+) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    update_user_password_internal(&conn, payload)
+}
+
+/// Aggiorna il profilo. Una password vuota significa "lasciala com'è".
+pub fn update_user_internal(
+    conn: &rusqlite::Connection,
+    payload: UpdateUserPayload,
+) -> Result<UserData, String> {
     let avatar_color = payload.avatar_color.unwrap_or_else(|| "#4263eb".to_string());
     let role = payload.role.unwrap_or_else(|| "user".to_string());
 
@@ -289,16 +313,31 @@ pub async fn update_user(
 }
 
 #[tauri::command]
-pub async fn delete_user(
-    id: String,
+pub async fn update_user(
+    payload: UpdateUserPayload,
     state: State<'_, DbState>,
-) -> Result<(), String> {
+) -> Result<UserData, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    update_user_internal(&conn, payload)
+}
+
+/// Elimina un profilo. Le pagine che ha creato restano, ma il vincolo di chiave
+/// esterna su `created_by` impedisce la cancellazione finché ne esiste qualcuna.
+pub fn delete_user_internal(conn: &rusqlite::Connection, id: &str) -> Result<(), String> {
     conn.execute(
         "DELETE FROM users WHERE id = ?1",
         params![id],
     ).map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_user(
+    id: String,
+    state: State<'_, DbState>,
+) -> Result<(), String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    delete_user_internal(&conn, &id)
 }
 
 #[tauri::command]

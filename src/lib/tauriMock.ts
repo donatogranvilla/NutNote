@@ -1273,6 +1273,50 @@ export function setupTauriMock() {
         };
       }
 
+      case 'move_page': {
+        const payload = args.payload || {};
+        const idx = state.pages.findIndex((p) => p.id === payload.id);
+        if (idx < 0) throw new Error('Pagina non trovata');
+
+        // Spostare sotto un proprio discendente spezzerebbe l'albero: il backend
+        // vero lo impedisce, e senza lo stesso controllo qui il browser mostrerebbe
+        // un comportamento che in Tauri fallisce.
+        const discendenti = (radice: string): string[] => {
+          const figli = state.pages.filter((p) => p.parentId === radice).map((p) => p.id);
+          return figli.concat(...figli.map(discendenti));
+        };
+        if (payload.newParentId && discendenti(payload.id).includes(payload.newParentId)) {
+          throw new Error('Non puoi spostare una pagina dentro una sua sottopagina');
+        }
+
+        state.pages[idx] = {
+          ...state.pages[idx],
+          parentId: payload.newParentId ?? null,
+          position: payload.newPosition ?? state.pages[idx].position ?? 0,
+          updatedAt: new Date().toISOString(),
+        };
+        saveState(state);
+        return state.pages[idx];
+      }
+
+      case 'list_directory_contents': {
+        // Il browser non ha accesso al disco: si restituisce un contenuto di esempio
+        // così il blocco Cartella resta impaginabile e provabile in sviluppo.
+        const base = args.folderPath || 'C:\\Esempio';
+        const adesso = Math.floor(Date.now() / 1000);
+        return [
+          { name: 'Documenti', path: `${base}\\Documenti`, is_dir: true, size_bytes: 0, extension: '', modified_str: String(adesso) },
+          { name: 'Preventivo 2026.xlsx', path: `${base}\\Preventivo 2026.xlsx`, is_dir: false, size_bytes: 24576, extension: 'xlsx', modified_str: String(adesso) },
+          { name: 'Contratto firmato.pdf', path: `${base}\\Contratto firmato.pdf`, is_dir: false, size_bytes: 189432, extension: 'pdf', modified_str: String(adesso) },
+          { name: 'Schema impianto.png', path: `${base}\\Schema impianto.png`, is_dir: false, size_bytes: 512000, extension: 'png', modified_str: String(adesso) },
+        ];
+      }
+
+      case 'open_path_in_os': {
+        console.info(`[TauriMock] Apertura percorso non disponibile nel browser: ${args.pathToOpen}`);
+        return null;
+      }
+
       default: {
         console.warn(`[TauriMock] Unhandled command: "${cmd}" with args:`, args);
         return null;

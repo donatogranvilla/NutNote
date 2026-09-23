@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { chatApi, usersApi } from '../../lib/api';
 import { useUser, UserData } from '../../contexts/UserContext';
 import { Send, Hash, MessageSquare, AtSign } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
 
   const loadMessages = async () => {
     try {
-      const data = await invoke<ChatMessage[]>('get_chat_messages', { pageId });
+      const data = await chatApi.getMessages(pageId);
       setMessages(data);
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -55,7 +55,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
 
   const loadUsers = async () => {
     try {
-      const data = await invoke<UserData[]>('get_users');
+      const data = await usersApi.getAll();
       setUsers(data);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -65,12 +65,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     try {
-      await invoke('create_chat_message', {
-        payload: {
-          pageId,
-          content: inputValue.trim(),
-        }
-      });
+      await chatApi.send(pageId, inputValue.trim());
       setInputValue('');
       setShowMentions(false);
       await loadMessages();
@@ -346,7 +341,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
             width: '220px',
             maxHeight: '160px',
             overflowY: 'auto',
-            zIndex: 100,
+            zIndex: 'var(--z-menu)',
             padding: '4px',
           }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', padding: '4px 8px', textTransform: 'uppercase' }}>
@@ -429,7 +424,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.15s ease',
+              transition: 'var(--transition-interactive)',
               flexShrink: 0,
             }}
           >

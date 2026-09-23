@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { usersApi } from '../lib/api';
 
 export interface UserData {
   id: string;
@@ -29,7 +29,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const refreshActiveUser = async () => {
     try {
-      const user = await invoke<UserData | null>('get_active_user');
+      const user = await usersApi.getActive();
       setActiveUserState(user);
     } catch (err) {
       console.error('Failed to refresh active user:', err);
@@ -39,8 +39,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedUserId = localStorage.getItem('nutnote_active_user_id') || localStorage.getItem('nution_active_user_id');
     if (savedUserId) {
-      invoke('set_active_user', { id: savedUserId })
-        .then(() => invoke<UserData | null>('get_active_user'))
+      usersApi.setActive(savedUserId)
+        .then(() => usersApi.getActive())
         .then((user) => {
           setActiveUserState(user);
         })
@@ -52,16 +52,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (id: string, password: string): Promise<UserData> => {
-    const user = await invoke<UserData>('authenticate_user', {
-      payload: { id, password },
-    });
+    const user = await usersApi.authenticate(id, password);
     localStorage.setItem('nutnote_active_user_id', user.id);
     setActiveUserState(user);
     return user;
   };
 
   const logout = async () => {
-    await invoke('set_active_user', { id: '' });
+    await usersApi.setActive('');
     localStorage.removeItem('nutnote_active_user_id');
     localStorage.removeItem('nution_active_user_id');
     setActiveUserState(null);
@@ -69,7 +67,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const setActiveUser = async (user: UserData | null) => {
     if (user) {
-      await invoke('set_active_user', { id: user.id });
+      await usersApi.setActive(user.id);
       localStorage.setItem('nutnote_active_user_id', user.id);
       setActiveUserState(user);
     } else {
