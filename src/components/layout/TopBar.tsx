@@ -1,23 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Search, Moon, Sun, Plus, Shield, LogOut, Settings, Users, Server } from 'lucide-react';
+import { Search, Moon, Sun, Plus, Shield, LogOut, Settings, Users, Server, Palette } from 'lucide-react';
 import { QuickCreateModal } from './QuickCreateModal';
 import { useUser } from '../../contexts/UserContext';
 import { AdminManagementModal } from '../admin/AdminManagementModal';
 import { DeploymentSettingsModal } from '../settings/DeploymentSettingsModal';
+import { AspettoModal } from '../settings/AspettoModal';
+import { useAspetto } from '../../contexts/AspettoContext';
 
 export default function TopBar() {
   const { activeUser, logout } = useUser();
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const { aspetto, aggiornaAspetto } = useAspetto();
+  const temaChiaro = aspetto.tema !== 'dark';
+  const [isAspettoModalOpen, setIsAspettoModalOpen] = useState(false);
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isDeploymentModalOpen, setIsDeploymentModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -94,15 +93,15 @@ export default function TopBar() {
           </button>
 
           <button 
-            onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')} 
+            onClick={() => aggiornaAspetto({ tema: temaChiaro ? 'dark' : 'light' })} 
             style={{
               padding: '5px', borderRadius: '6px', border: 'none',
               background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
               display: 'flex', alignItems: 'center',
             }}
-            title={theme === 'light' ? 'Tema scuro' : 'Tema chiaro'}
+            title={temaChiaro ? 'Tema scuro' : 'Tema chiaro'}
           >
-            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            {temaChiaro ? <Moon size={16} /> : <Sun size={16} />}
           </button>
 
           {/* User Profile Avatar & Dropdown */}
@@ -135,7 +134,7 @@ export default function TopBar() {
                 border: '1px solid var(--border)',
                 borderRadius: '12px',
                 boxShadow: 'var(--shadow-lg)',
-                zIndex: 500,
+                zIndex: 'var(--z-menu)',
                 padding: '8px',
               }}>
                 {/* User Info Header */}
@@ -207,6 +206,34 @@ export default function TopBar() {
                   </button>
                 )}
 
+                {/* Aspetto Menu Item */}
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    setIsAspettoModalOpen(true);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-surface-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <Palette size={15} />
+                  <span>Aspetto</span>
+                </button>
+
                 {/* Deployment Settings Menu Item */}
                 <button
                   onClick={() => {
@@ -271,6 +298,7 @@ export default function TopBar() {
       <QuickCreateModal isOpen={isQuickCreateOpen} onClose={() => setIsQuickCreateOpen(false)} />
       <AdminManagementModal isOpen={isAdminModalOpen} onClose={() => setIsAdminModalOpen(false)} />
       <DeploymentSettingsModal isOpen={isDeploymentModalOpen} onClose={() => setIsDeploymentModalOpen(false)} />
+      <AspettoModal isOpen={isAspettoModalOpen} onClose={() => setIsAspettoModalOpen(false)} />
     </>
   );
 }

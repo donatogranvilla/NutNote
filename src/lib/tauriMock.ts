@@ -19,6 +19,7 @@ interface MockState {
   blocks: Record<string, any[]>;
   chatMessages: Record<string, any[]>;
   relations: any[];
+  views: any[];
 }
 
 const STORAGE_KEY = 'nutnote_browser_mock_state_v4';
@@ -401,6 +402,7 @@ function getDefaultState(): MockState {
         properties: { section: 'Deutsch', language: 'de' },
       },
     ],
+    views: [],
     relations: [
       {
         id: 'rel-mock-1',
@@ -1271,6 +1273,101 @@ export function setupTauriMock() {
           url: 'https://via.placeholder.com/150',
           filename: args.filename || 'mock-file.png',
         };
+      }
+
+      case 'move_page': {
+        const payload = args.payload || {};
+        const idx = state.pages.findIndex((p) => p.id === payload.id);
+        if (idx < 0) throw new Error('Pagina non trovata');
+
+        // Spostare sotto un proprio discendente spezzerebbe l'albero: il backend
+        // vero lo impedisce, e senza lo stesso controllo qui il browser mostrerebbe
+        // un comportamento che in Tauri fallisce.
+        const discendenti = (radice: string): string[] => {
+          const figli = state.pages.filter((p) => p.parentId === radice).map((p) => p.id);
+          return figli.concat(...figli.map(discendenti));
+        };
+        if (payload.newParentId && discendenti(payload.id).includes(payload.newParentId)) {
+          throw new Error('Non puoi spostare una pagina dentro una sua sottopagina');
+        }
+
+        state.pages[idx] = {
+          ...state.pages[idx],
+          parentId: payload.newParentId ?? null,
+          position: payload.newPosition ?? state.pages[idx].position ?? 0,
+          updatedAt: new Date().toISOString(),
+        };
+        saveState(state);
+        return state.pages[idx];
+      }
+
+      case 'list_directory_contents': {
+        // Il browser non ha accesso al disco: si restituisce un contenuto di esempio
+        // così il blocco Cartella resta impaginabile e provabile in sviluppo.
+        const base = args.folderPath || 'C:\\Esempio';
+        const adesso = Math.floor(Date.now() / 1000);
+        return [
+          { name: 'Documenti', path: `${base}\\Documenti`, is_dir: true, size_bytes: 0, extension: '', modified_str: String(adesso) },
+          { name: 'Preventivo 2026.xlsx', path: `${base}\\Preventivo 2026.xlsx`, is_dir: false, size_bytes: 24576, extension: 'xlsx', modified_str: String(adesso) },
+          { name: 'Contratto firmato.pdf', path: `${base}\\Contratto firmato.pdf`, is_dir: false, size_bytes: 189432, extension: 'pdf', modified_str: String(adesso) },
+          { name: 'Schema impianto.png', path: `${base}\\Schema impianto.png`, is_dir: false, size_bytes: 512000, extension: 'png', modified_str: String(adesso) },
+        ];
+      }
+
+      case 'get_views': {
+        const ambito = args.scopeType || 'global';
+        return (state.views || []).filter(
+          (v: any) => v.scopeType === ambito && (!args.scopeId || v.scopeId === args.scopeId),
+        );
+      }
+
+      case 'create_view': {
+        const p = args.payload || {};
+        if (!state.views) state.views = [];
+        const vista = {
+          id: `view-${Date.now()}`,
+          name: p.name,
+          displayType: p.displayType,
+          filters: p.filters || '[]',
+          sortBy: p.sortBy || '[]',
+          groupBy: p.groupBy || null,
+          visibleProperties: p.visibleProperties || '[]',
+          scopeType: p.scopeType || 'global',
+          scopeId: p.scopeId || null,
+          isDefault: !!p.isDefault,
+          position: state.views.length,
+          createdBy: state.activeUserId || 'user-admin',
+          createdAt: new Date().toISOString(),
+        };
+        // Una sola predefinita per ambito, come fa il vincolo lato Rust.
+        if (vista.isDefault) {
+          state.views.forEach((v: any) => {
+            if (v.scopeType === vista.scopeType && v.scopeId === vista.scopeId) v.isDefault = false;
+          });
+        }
+        state.views.push(vista);
+        saveState(state);
+        return vista;
+      }
+
+      case 'update_view': {
+        const p = args.payload || {};
+        const vista = (state.views || []).find((v: any) => v.id === p.id);
+        if (!vista) throw new Error('Vista non trovata');
+        Object.assign(vista, p);
+        saveState(state);
+        return vista;
+      }
+
+      case 'delete_view': {
+        state.views = (state.views || []).filter((v: any) => v.id !== args.id);
+        saveState(state);
+        return true;
+      }
+
+      case 'open_path_in_os': {
+        console.info(`[TauriMock] Apertura percorso non disponibile nel browser: ${args.pathToOpen}`);
+        return null;
       }
 
       default: {

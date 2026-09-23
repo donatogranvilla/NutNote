@@ -2073,6 +2073,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-log",
  "tokio",
+ "tower",
  "tower-http",
  "uuid",
 ]

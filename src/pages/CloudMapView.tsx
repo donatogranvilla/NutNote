@@ -26,7 +26,7 @@ function CustomNode({ data, selected }: NodeProps) {
       alignItems: 'center',
       gap: '8px',
       minWidth: '150px',
-      transition: 'all 0.2s ease',
+      transition: 'var(--transition-interactive)',
       cursor: 'pointer'
     }}>
       <Handle type="target" position={Position.Top} style={{ background: 'var(--text-muted)', width: 6, height: 6 }} />

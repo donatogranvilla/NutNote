@@ -75,7 +75,7 @@ export function SearchModal() {
         justifyContent: 'center',
         alignItems: 'flex-start',
         paddingTop: '12vh',
-        zIndex: 1000,
+        zIndex: 'var(--z-modal)',
         backdropFilter: 'blur(3px)'
       }}
       onClick={() => setIsOpen(false)}
@@ -158,7 +158,7 @@ export function SearchModal() {
                       cursor: 'pointer',
                       backgroundColor: isSelected ? 'var(--bg-surface-active)' : 'transparent',
                       border: isSelected ? '1px solid var(--accent)' : '1px solid transparent',
-                      transition: 'all 0.1s'
+                      transition: 'var(--transition-interactive)'
                     }}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     onClick={() => handleSelectResult(pageId)}

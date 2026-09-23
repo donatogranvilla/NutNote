@@ -112,6 +112,11 @@ fn main() {
             commands::files::upload_file,
             commands::files::list_directory_contents,
             commands::files::open_path_in_os,
+            // Viste salvate
+            commands::views::get_views,
+            commands::views::create_view,
+            commands::views::update_view,
+            commands::views::delete_view,
             // Config
             commands::config::get_config,
             commands::config::save_config,

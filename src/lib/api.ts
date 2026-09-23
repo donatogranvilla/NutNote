@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import type {
   Page, PageWithDetails, PageWithAncestorsResponse, Block,
-  User, PageType,
+  User, UserWithPassword, PageType, Team,
   CreatePageRequest, UpdatePageRequest, QueryPagesRequest,
   PaginatedResponse, NutNoteConfig, ServerStatus, ChangeLogEntry
 } from './types';
@@ -22,12 +22,21 @@ export function getServerUrl(): string {
   return localStorage.getItem('nutnote_server_url') || 'http://localhost:9700';
 }
 
+// Utente attivo, salvato da UserContext al login. Viaggia in ogni richiesta remota
+// nell'header X-NutNote-User: sul server l'identità è una proprietà della richiesta,
+// non del processo come invece è in locale.
+export function getActiveUserId(): string | null {
+  return localStorage.getItem('nutnote_active_user_id') || localStorage.getItem('nution_active_user_id');
+}
+
 async function remoteFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${getServerUrl()}${path}`;
+  const userId = getActiveUserId();
   const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(userId ? { 'X-NutNote-User': userId } : {}),
       ...options?.headers,
     },
   });
@@ -321,12 +330,176 @@ export const filesApi = {
   },
 };
 
+export const teamsApi = {
+  getAll: async (): Promise<Team[]> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<Team[]>('/api/teams');
+    }
+    return invoke<Team[]>('get_teams', {});
+  },
+
+  create: async (payload: { name: string; description?: string; color?: string }): Promise<Team> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<Team>('/api/teams', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    return invoke<Team>('create_team', { payload });
+  },
+
+  update: async (payload: { id: string; name: string; description?: string; color?: string }): Promise<Team> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<Team>(`/api/teams/${payload.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    }
+    return invoke<Team>('update_team', { payload });
+  },
+
+  remove: async (id: string): Promise<void> => {
+    if (getBackendMode() === 'remote') {
+      await remoteFetch<boolean>(`/api/teams/${id}`, { method: 'DELETE' });
+      return;
+    }
+    await invoke('delete_team', { id });
+  },
+};
+
+export interface ChatMessage {
+  id: string;
+  pageId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+}
+
+/**
+ * Chat di progetto. È l'unica funzione di NutNote intrinsecamente collaborativa,
+ * quindi è anche quella che ha più bisogno di passare dal server quando si lavora
+ * in rete: finché parlava solo con il database locale, due colleghi sullo stesso
+ * progetto scrivevano in due archivi distinti senza accorgersene.
+ */
+export const chatApi = {
+  getMessages: async (pageId: string): Promise<ChatMessage[]> => {
+    try {
+      if (getBackendMode() === 'remote') {
+        return await remoteFetch<ChatMessage[]>(`/api/chat/${pageId}`);
+      }
+      return await invoke<ChatMessage[]>('get_chat_messages', { pageId });
+    } catch {
+      return [];
+    }
+  },
+
+  send: async (pageId: string, content: string): Promise<ChatMessage> => {
+    const payload = { pageId, content };
+    if (getBackendMode() === 'remote') {
+      // In remoto l'autore arriva dall'header; in locale lo mette il comando
+      // Tauri leggendo l'utente attivo del processo.
+      return remoteFetch<ChatMessage>('/api/chat', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    return invoke<ChatMessage>('create_chat_message', { payload });
+  },
+};
+
+export interface CreateUserRequest {
+  displayName: string;
+  avatarColor?: string;
+  password?: string;
+  role?: string;
+  teamId?: string | null;
+}
+
+export interface UpdateUserRequest extends CreateUserRequest {
+  id: string;
+}
+
 export const usersApi = {
   getAll: async (): Promise<User[]> => {
     if (getBackendMode() === 'remote') {
       return remoteFetch<User[]>('/api/users');
     }
     return invoke<User[]>('get_users', {});
+  },
+
+  /** Elenco con le password in chiaro, per il pannello di amministrazione. */
+  getAllAdmin: async (): Promise<UserWithPassword[]> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<UserWithPassword[]>('/api/admin/users');
+    }
+    return invoke<UserWithPassword[]>('get_all_users_admin', {});
+  },
+
+  authenticate: async (id: string, password: string): Promise<User> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<User>('/api/auth', {
+        method: 'POST',
+        body: JSON.stringify({ id, password }),
+      });
+    }
+    return invoke<User>('authenticate_user', { payload: { id, password } });
+  },
+
+  create: async (payload: CreateUserRequest): Promise<User> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<User>('/api/users', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    }
+    return invoke<User>('create_user', { payload });
+  },
+
+  update: async (payload: UpdateUserRequest): Promise<User> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<User>(`/api/users/${payload.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    }
+    return invoke<User>('update_user', { payload });
+  },
+
+  remove: async (id: string): Promise<void> => {
+    if (getBackendMode() === 'remote') {
+      await remoteFetch<boolean>(`/api/users/${id}`, { method: 'DELETE' });
+      return;
+    }
+    await invoke('delete_user', { id });
+  },
+
+  updatePassword: async (userId: string, newPassword: string): Promise<void> => {
+    if (getBackendMode() === 'remote') {
+      await remoteFetch<boolean>(`/api/users/${userId}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ newPassword }),
+      });
+      return;
+    }
+    await invoke('update_user_password', { payload: { userId, newPassword } });
+  },
+
+  /**
+   * Imposta l'utente attivo.
+   *
+   * In remoto non c'è nulla da comunicare al server: l'identità viaggia
+   * nell'header a ogni richiesta e il server non tiene sessioni. In locale,
+   * invece, serve perché il filtro sulle note private legge lo stato del processo.
+   */
+  setActive: async (id: string): Promise<void> => {
+    if (getBackendMode() === 'remote') return;
+    await invoke('set_active_user', { id });
+  },
+
+  /**
+   * Utente attivo. In remoto si risolve l'id salvato sul client contro l'elenco
+   * del server: interrogare il database locale restituirebbe un profilo che sul
+   * server potrebbe non esistere affatto.
+   */
+  getActive: async (): Promise<User | null> => {
+    if (getBackendMode() === 'remote') {
+      const id = getActiveUserId();
+      if (!id) return null;
+      const elenco = await remoteFetch<User[]>('/api/users');
+      return elenco.find((u) => u.id === id) ?? null;
+    }
+    return invoke<User | null>('get_active_user', {});
   },
 };
 
@@ -354,7 +527,7 @@ export const changelogApi = {
     if (getBackendMode() === 'remote') {
       return await remoteFetch<boolean>('/api/changelog/restore', {
         method: 'POST',
-        body: JSON.stringify({ logId, userId }),
+        body: JSON.stringify({ logId }),
       });
     }
     return await invoke<boolean>('restore_field', {
@@ -374,4 +547,76 @@ export const serverApi = {
   getStatus: () => invoke<ServerStatus>('get_server_status', {}),
   start: (port?: number) => invoke<ServerStatus>('start_server', { portOverride: port || null }),
   stop: () => invoke<ServerStatus>('stop_server', {}),
+};
+
+export interface SavedView {
+  id: string;
+  name: string;
+  displayType: 'table' | 'kanban' | 'list' | 'calendar' | 'gallery';
+  filters: string;
+  sortBy: string;
+  groupBy?: string | null;
+  visibleProperties: string;
+  scopeType: 'global' | 'type' | 'page';
+  scopeId?: string | null;
+  isDefault: boolean;
+  position: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateViewRequest {
+  name: string;
+  displayType: string;
+  filters?: string;
+  sortBy?: string;
+  groupBy?: string | null;
+  visibleProperties?: string;
+  scopeType?: string;
+  scopeId?: string | null;
+  isDefault?: boolean;
+}
+
+/**
+ * Viste salvate: una configurazione di elenco a cui si è dato un nome.
+ *
+ * Filtri e ordinamenti viaggiano come JSON in stringa: la loro forma la decide
+ * l'interfaccia, così aggiungere un criterio non richiede di cambiare lo schema
+ * del database né i tipi lato Rust.
+ */
+export const viewsApi = {
+  getForScope: async (scopeType: string, scopeId?: string | null): Promise<SavedView[]> => {
+    try {
+      if (getBackendMode() === 'remote') {
+        const q = new URLSearchParams({ scopeType });
+        if (scopeId) q.set('scopeId', scopeId);
+        return await remoteFetch<SavedView[]>(`/api/views?${q.toString()}`);
+      }
+      return await invoke<SavedView[]>('get_views', { scopeType, scopeId: scopeId ?? null });
+    } catch {
+      return [];
+    }
+  },
+
+  create: async (payload: CreateViewRequest): Promise<SavedView> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<SavedView>('/api/views', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    return invoke<SavedView>('create_view', { payload });
+  },
+
+  update: async (payload: { id: string } & Partial<CreateViewRequest> & { position?: number }): Promise<SavedView> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<SavedView>(`/api/views/${payload.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    }
+    return invoke<SavedView>('update_view', { payload });
+  },
+
+  remove: async (id: string): Promise<void> => {
+    if (getBackendMode() === 'remote') {
+      await remoteFetch<boolean>(`/api/views/${id}`, { method: 'DELETE' });
+      return;
+    }
+    await invoke('delete_view', { id });
+  },
 };

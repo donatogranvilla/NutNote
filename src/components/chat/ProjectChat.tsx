@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { chatApi, usersApi } from '../../lib/api';
+import { leggiRiferimento } from '../../lib/deepLink';
+import { PastigliaRiferimento } from '../page/RiferimentiInterni';
 import { useUser, UserData } from '../../contexts/UserContext';
 import { Send, Hash, MessageSquare, AtSign } from 'lucide-react';
 
@@ -46,7 +48,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
 
   const loadMessages = async () => {
     try {
-      const data = await invoke<ChatMessage[]>('get_chat_messages', { pageId });
+      const data = await chatApi.getMessages(pageId);
       setMessages(data);
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -55,7 +57,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
 
   const loadUsers = async () => {
     try {
-      const data = await invoke<UserData[]>('get_users');
+      const data = await usersApi.getAll();
       setUsers(data);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -65,12 +67,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
   const handleSend = async () => {
     if (!inputValue.trim()) return;
     try {
-      await invoke('create_chat_message', {
-        payload: {
-          pageId,
-          content: inputValue.trim(),
-        }
-      });
+      await chatApi.send(pageId, inputValue.trim());
       setInputValue('');
       setShowMentions(false);
       await loadMessages();
@@ -173,31 +170,13 @@ export function ProjectChat({ pageId }: { pageId: string }) {
             </React.Fragment>
           );
         }
-      } else if (word.startsWith('nutnote://block/') || word.startsWith('nution://block/')) {
-        const parts = word.split('/');
-        if (parts.length >= 5) {
-          const targetPageId = parts[3];
-          const blockId = parts[4];
-          return (
-            <a 
-              key={i} 
-              href={`/page/${targetPageId}?block=${blockId}`} 
-              style={{
-                color: 'var(--accent)',
-                textDecoration: 'underline',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-                fontWeight: 600,
-                backgroundColor: 'var(--bg-surface)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <Hash size={12} /> Referenza Blocco
-            </a>
-          );
+      } else {
+        // Il riconoscimento dei riferimenti sta in lib/deepLink: prima era
+        // riscritto qui dentro, ed era l'unico punto dell'applicazione in cui
+        // un indirizzo nutnote:// veniva capito.
+        const riferimento = leggiRiferimento(word);
+        if (riferimento) {
+          return <PastigliaRiferimento key={i} riferimento={riferimento} />;
         }
       }
       return <span key={i}>{word}</span>;
@@ -346,7 +325,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
             width: '220px',
             maxHeight: '160px',
             overflowY: 'auto',
-            zIndex: 100,
+            zIndex: 'var(--z-menu)',
             padding: '4px',
           }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', padding: '4px 8px', textTransform: 'uppercase' }}>
@@ -429,7 +408,7 @@ export function ProjectChat({ pageId }: { pageId: string }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.15s ease',
+              transition: 'var(--transition-interactive)',
               flexShrink: 0,
             }}
           >

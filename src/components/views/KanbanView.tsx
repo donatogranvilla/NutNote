@@ -32,10 +32,24 @@ export function KanbanView({ items, statusFlow, onStatusChange, onReorder }: Kan
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const columns = statusFlow.map(status => ({
-    ...status,
-    items: items.filter(i => i.status === status.value)
-  }));
+  /**
+   * Raggruppa le schede per stato in una sola passata.
+   *
+   * Prima ogni colonna rifiltrava l'intero elenco, quindi il costo era
+   * colonne × schede, e veniva ripagato a ogni render — cioè molte volte al
+   * secondo mentre si trascina una scheda. Con una mappa il costo è lineare e
+   * il risultato viene ricalcolato solo quando cambiano davvero le schede.
+   */
+  const columns = React.useMemo(() => {
+    const perStato = new Map<string, PageWithDetails[]>();
+    for (const status of statusFlow) perStato.set(status.value, []);
+    for (const item of items) perStato.get(item.status)?.push(item);
+
+    return statusFlow.map(status => ({
+      ...status,
+      items: perStato.get(status.value) ?? []
+    }));
+  }, [items, statusFlow]);
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;

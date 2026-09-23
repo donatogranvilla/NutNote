@@ -55,7 +55,24 @@
   --transition-normal: 150ms ease;
   --transition-slow: 250ms ease;
   --transition-spring: 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* Proprietà che gli elementi interattivi animano davvero. Elencarle al posto di
+     'all' evita che il browser sorvegli anche larghezze, margini e padding, i cui
+     cambi costano un ricalcolo del layout a ogni fotogramma. */
+  --transition-interactive: background-color 150ms ease, border-color 150ms ease,
+                            color 150ms ease, box-shadow 150ms ease,
+                            transform 150ms ease, opacity 150ms ease;
   
+  /* === Livelli di sovrapposizione ===
+     Scala unica: prima ogni menu sceglieva un valore a caso (100, 200, 500, 1000)
+     e finiva per coprirne un altro. Scarto di 100 fra i livelli per i casi intermedi. */
+  --z-raised: 1;          /* elemento sollevato nel flusso, es. card trascinata */
+  --z-bar: 100;           /* barre sticky: intestazioni di colonna, toolbar */
+  --z-menu: 200;          /* dropdown e popover ancorati a un elemento */
+  --z-overlay: 900;       /* velo scuro dietro le finestre modali */
+  --z-modal: 1000;        /* finestre modali */
+  --z-modal-nested: 1100; /* finestra aperta da un'altra finestra */
+  --z-toast: 1200;        /* messaggi temporanei, sempre in cima */
+
   /* === Layout === */
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 48px;
@@ -182,9 +199,9 @@ input, textarea, select {
 .tiptap-content-container .ProseMirror {
   min-height: 280px;
   outline: none;
-  line-height: 1.65;
+  line-height: var(--editor-line-height, 1.65);
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: var(--editor-font-size, 15px);
 }
 
 .tiptap-content-container .ProseMirror p.is-editor-empty:first-child::before {
@@ -274,7 +291,7 @@ input, textarea, select {
 }
 
 .tiptap-content-container .ProseMirror img {
-  max-width: 100%;
+  max-width: var(--editor-image-max-width, 100%);
   height: auto;
   border-radius: var(--radius-md);
   margin: 16px 0;
@@ -337,4 +354,31 @@ input, textarea, select {
 
 .kanban-card:active {
   cursor: grabbing;
+}
+
+/* === Intensità degli effetti grafici ===
+   Leva diretta sulle prestazioni. Le sfocature (backdrop-filter) vanno ricomposte
+   a ogni frame sull'area che coprono: su macchine modeste sono la voce più cara
+   dell'interfaccia. Spegnerle da qui costa una regola, non una modifica ovunque. */
+[data-effetti="ridotti"] *,
+[data-effetti="minimi"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-effetti="minimi"] * {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* Chi ha chiesto al sistema operativo meno movimento lo ottiene comunque,
+   qualunque sia il livello scelto nelle preferenze. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

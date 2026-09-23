@@ -44,3 +44,8 @@ codegen-units = 1
 debug = false
 strip = true
 
+
+[dev-dependencies]
+# Serve solo ai test: permette di inviare richieste vere al router senza
+# aprire una porta di rete.
+tower = { version = "0.5", features = ["util"] }

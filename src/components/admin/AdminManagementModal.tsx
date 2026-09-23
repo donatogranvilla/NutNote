@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { usersApi, teamsApi } from '../../lib/api';
 import { UserWithPassword, Team } from '../../lib/types';
 import { useUser } from '../../contexts/UserContext';
 import { 
@@ -64,8 +64,8 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
     setErrorMessage('');
     try {
       const [usersData, teamsData] = await Promise.all([
-        invoke<UserWithPassword[]>('get_all_users_admin'),
-        invoke<Team[]>('get_teams'),
+        usersApi.getAllAdmin(),
+        teamsApi.getAll(),
       ]);
       setUsers(usersData);
       setTeams(teamsData);
@@ -82,12 +82,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
   const handleSavePassword = async () => {
     if (!editingPasswordUser || !newPasswordVal.trim()) return;
     try {
-      await invoke('update_user_password', {
-        payload: {
-          userId: editingPasswordUser.id,
-          newPassword: newPasswordVal.trim(),
-        },
-      });
+      await usersApi.updatePassword(editingPasswordUser.id, newPasswordVal.trim());
       setEditingPasswordUser(null);
       setNewPasswordVal('');
       loadAllData();
@@ -107,15 +102,12 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
   const handleSaveUser = async () => {
     if (!editingUser || !editName.trim()) return;
     try {
-      await invoke('update_user', {
-        payload: {
-          id: editingUser.id,
-          displayName: editName.trim(),
-          avatarColor: editColor,
-          role: editRole,
-          teamId: editTeamId ? editTeamId : null,
-          password: null,
-        },
+      await usersApi.update({
+        id: editingUser.id,
+        displayName: editName.trim(),
+        avatarColor: editColor,
+        role: editRole,
+        teamId: editTeamId ? editTeamId : null,
       });
       setEditingUser(null);
       await refreshActiveUser();
@@ -128,14 +120,12 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
   const handleCreateUser = async () => {
     if (!createUserName.trim()) return;
     try {
-      await invoke('create_user', {
-        payload: {
-          displayName: createUserName.trim(),
-          avatarColor: createUserColor,
-          password: createUserPwd.trim() || '1234',
-          role: createUserRole,
-          teamId: createUserTeamId ? createUserTeamId : null,
-        },
+      await usersApi.create({
+        displayName: createUserName.trim(),
+        avatarColor: createUserColor,
+        password: createUserPwd.trim() || '1234',
+        role: createUserRole,
+        teamId: createUserTeamId ? createUserTeamId : null,
       });
       setIsCreatingUser(false);
       setCreateUserName('');
@@ -154,7 +144,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
     if (!confirm(`Sei sicuro di voler eliminare l'utente "${name}"?`)) return;
 
     try {
-      await invoke('delete_user', { id });
+      await usersApi.remove(id);
       loadAllData();
     } catch (err: any) {
       setErrorMessage(typeof err === 'string' ? err : 'Errore eliminazione utente');
@@ -171,21 +161,17 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
     setSubModalError('');
     try {
       if (editingTeam) {
-        await invoke('update_team', {
-          payload: {
-            id: editingTeam.id,
-            name: teamName.trim(),
-            description: teamDesc.trim(),
-            color: teamColor,
-          },
+        await teamsApi.update({
+          id: editingTeam.id,
+          name: teamName.trim(),
+          description: teamDesc.trim(),
+          color: teamColor,
         });
       } else {
-        await invoke('create_team', {
-          payload: {
-            name: teamName.trim(),
-            description: teamDesc.trim(),
-            color: teamColor,
-          },
+        await teamsApi.create({
+          name: teamName.trim(),
+          description: teamDesc.trim(),
+          color: teamColor,
         });
       }
       setIsCreatingTeam(false);
@@ -206,7 +192,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
   const handleDeleteTeam = async (id: string, name: string) => {
     if (!confirm(`Sei sicuro di voler eliminare il team "${name}"? Gli utenti associati non verranno eliminati ma rimarranno senza team.`)) return;
     try {
-      await invoke('delete_team', { id });
+      await teamsApi.remove(id);
       await refreshActiveUser();
       loadAllData();
     } catch (err: any) {
@@ -223,7 +209,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000,
+      zIndex: 'var(--z-modal)',
       padding: '1.5rem',
     }}>
       <div style={{
@@ -612,7 +598,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1100,
+            zIndex: 'var(--z-modal-nested)',
           }}>
             <div style={{
               backgroundColor: 'var(--bg-surface)',
@@ -685,7 +671,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1100,
+            zIndex: 'var(--z-modal-nested)',
           }}>
             <div style={{
               backgroundColor: 'var(--bg-surface)',
@@ -833,7 +819,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1100,
+            zIndex: 'var(--z-modal-nested)',
           }}>
             <div style={{
               backgroundColor: 'var(--bg-surface)',
@@ -1004,7 +990,7 @@ export function AdminManagementModal({ isOpen, onClose }: AdminManagementModalPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1100,
+            zIndex: 'var(--z-modal-nested)',
           }}>
             <div style={{
               backgroundColor: 'var(--bg-surface)',

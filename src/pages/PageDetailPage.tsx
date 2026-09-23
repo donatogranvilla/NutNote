@@ -7,6 +7,8 @@ import { BlockEditor } from '../components/page/BlockEditor';
 import { PropertiesPanel } from '../components/page/PropertiesPanel';
 import { RelationsPanel } from '../components/page/RelationsPanel';
 import { exportPageToPdf, exportPageToDocx, exportPageToMarkdown } from '../lib/export';
+import { SelettoreEmoji } from '../components/page/SelettoreEmoji';
+import { SFUMATURE, riferimentoSfumatura, isSfumatura, sfondoCopertina } from '../lib/copertine';
 import { readMarkdownFile } from '../lib/importMarkdown';
 import { 
   Star, MoreHorizontal, ChevronRight, ChevronLeft, ChevronDown, Plus, Trash2, 
@@ -32,15 +34,6 @@ const WIKI_CHAPTERS = [
   { id: 'wiki-ch9-faq-riferimento', num: 9, title: "Capitolo 9: Riferimento Rapido & FAQ", icon: '⚡' },
 ];
 
-const COMMON_EMOJIS = ['📄', '🏢', '🚀', '💼', '🎨', '⚡', '🐛', '📝', '📚', '🌐', '💡', '📁', '✅', '⭐', '🔥', '📌', '🎯', '🛠️'];
-
-const PRESET_COVERS = [
-  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80',
-  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
-  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80',
-  'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80',
-  'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80',
-];
 
 export default function PageDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -98,6 +91,10 @@ export default function PageDetailPage() {
   const effectiveClientTitle = isCurrentClient ? page?.title : clientAncestor?.title;
 
   const titleTimeoutRef = useRef<any>(null);
+  // Deve stare qui insieme agli altri hook: più in basso finirebbe dopo le uscite
+  // anticipate di caricamento ed errore, e React vedrebbe un hook in più quando
+  // la pagina finisce di caricare.
+  const markdownInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (page?.title) {
@@ -170,7 +167,8 @@ export default function PageDetailPage() {
     updatePage.mutate({ request: { id: page.id, visibility: newVisibility } });
   };
 
-  const handleIconSelect = (icon: string) => {
+  /** `null` toglie l'icona e lascia la pagina con quella del suo tipo. */
+  const handleIconSelect = (icon: string | null) => {
     updatePage.mutate({ request: { id: page.id, icon } });
     setShowEmojiPicker(false);
   };
@@ -234,8 +232,6 @@ export default function PageDetailPage() {
   // 3. Collection Hub with Children (Parent Note)
   const validChildren = children.filter(c => !c.isArchived);
   const hasChildren = validChildren.length > 0;
-
-  const markdownInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportMarkdown = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -315,7 +311,7 @@ export default function PageDetailPage() {
           position: 'relative',
           height: '180px',
           width: '100%',
-          backgroundImage: `url(${page.coverUrl})`,
+          background: sfondoCopertina(page.coverUrl),
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           borderRadius: 'var(--radius-lg)',
@@ -387,7 +383,7 @@ export default function PageDetailPage() {
                 backgroundColor: copiedPageId ? 'rgba(43, 138, 62, 0.15)' : 'var(--bg-app)',
                 color: copiedPageId ? 'var(--success)' : 'var(--text-muted)',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                transition: 'var(--transition-interactive)',
               }}
               title="Clicca per copiare l'ID univoco di questa pagina"
             >
@@ -497,7 +493,7 @@ export default function PageDetailPage() {
                   border: '1px solid var(--border)',
                   borderRadius: 'var(--radius-md)',
                   boxShadow: 'var(--shadow-lg)',
-                  zIndex: 200,
+                  zIndex: 'var(--z-menu)',
                   padding: '4px'
                 }}>
                   <div style={{ padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
@@ -589,18 +585,50 @@ export default function PageDetailPage() {
             flexDirection: 'column',
             gap: '8px'
           }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Seleziona Immagine di Copertina</div>
-            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-              {PRESET_COVERS.map((url, i) => (
-                <img 
-                  key={i}
-                  src={url} 
-                  alt="cover"
-                  onClick={() => handleCoverSelect(url)}
-                  style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer', border: page.coverUrl === url ? '2px solid var(--accent)' : '1px solid var(--border)' }}
-                />
-              ))}
+            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Copertina</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))', gap: '8px' }}>
+              {SFUMATURE.map((sfumatura) => {
+                const riferimento = riferimentoSfumatura(sfumatura.id);
+                const scelta = page.coverUrl === riferimento;
+                return (
+                  <button
+                    key={sfumatura.id}
+                    onClick={() => handleCoverSelect(riferimento)}
+                    title={sfumatura.nome}
+                    style={{
+                      height: '52px',
+                      background: sfumatura.css,
+                      borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer',
+                      border: scelta ? '2px solid var(--text-primary)' : '1px solid var(--border)',
+                      outline: scelta ? '2px solid var(--accent)' : 'none',
+                    }}
+                  />
+                );
+              })}
             </div>
+
+            {/* Una foto vera resta possibile, ma è una scelta esplicita: se il
+                file è remoto, senza rete l'intestazione resterà vuota. */}
+            <input
+              type="text"
+              defaultValue={isSfumatura(page.coverUrl) ? '' : (page.coverUrl || '')}
+              placeholder="Oppure incolla l'indirizzo di un'immagine..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const valore = (e.target as HTMLInputElement).value.trim();
+                  handleCoverSelect(valore || null);
+                }
+              }}
+              style={{
+                padding: '7px 10px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--bg-input)',
+                fontSize: '12px',
+                color: 'var(--text-primary)',
+              }}
+            />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               {page.coverUrl && (
                 <button onClick={() => handleCoverSelect(null)} style={{ fontSize: '12px', color: 'var(--danger)', padding: '4px 8px' }}>
@@ -660,33 +688,11 @@ export default function PageDetailPage() {
             </button>
 
             {showEmojiPicker && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-lg)',
-                padding: '8px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(6, 1fr)',
-                gap: '6px',
-                zIndex: 100,
-                width: '210px'
-              }}>
-                {COMMON_EMOJIS.map(em => (
-                  <button
-                    key={em}
-                    onClick={() => handleIconSelect(em)}
-                    style={{ fontSize: '20px', padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-surface-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    {em}
-                  </button>
-                ))}
-              </div>
+              <SelettoreEmoji
+                valoreCorrente={page.icon}
+                onSeleziona={(simbolo) => handleIconSelect(simbolo)}
+                onChiudi={() => setShowEmojiPicker(false)}
+              />
             )}
           </div>
 
@@ -745,7 +751,7 @@ export default function PageDetailPage() {
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-lg)',
-                zIndex: 100,
+                zIndex: 'var(--z-menu)',
                 padding: '4px'
               }}>
                 {(Array.isArray(pageType?.statusFlow) ? pageType.statusFlow : []).map(st => (
@@ -798,7 +804,7 @@ export default function PageDetailPage() {
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-lg)',
-                zIndex: 100,
+                zIndex: 'var(--z-menu)',
                 padding: '4px'
               }}>
                 {(['urgent', 'high', 'medium', 'low', 'none'] as Priority[]).map(p => (
@@ -984,7 +990,7 @@ export default function PageDetailPage() {
                     border: '1px solid var(--border)',
                     borderRadius: 'var(--radius-md)',
                     boxShadow: 'var(--shadow-lg)',
-                    zIndex: 100,
+                    zIndex: 'var(--z-menu)',
                     padding: '4px',
                   }}>
                     {allowedChildTypes.map(t => (
@@ -1470,7 +1476,7 @@ export default function PageDetailPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 'var(--z-modal)'
         }}>
           <div style={{
             backgroundColor: 'var(--bg-surface)',
