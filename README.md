@@ -1,6 +1,5 @@
-# NutNote (ex Nution) 🥜📝
+# NutNote 🥜📝
 
-> **Un'alternativa moderna, modulare e offline-first a Notion, pensata per la gestione aziendale gerarchica.**  
 > Sviluppato con **Tauri 2**, **Rust**, **SQLite**, **React 19**, **TypeScript** e **TipTap**.
 
 ---
