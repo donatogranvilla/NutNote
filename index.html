@@ -1,10 +1,38 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NutNote</title>
+    <script>
+      // Applica tema e preferenze prima del primo disegno: senza questo l'app
+      // parte in chiaro e vira allo scuro solo dopo il primo render di React,
+      // con un lampo bianco a ogni avvio. Volutamente sincrono e minimale —
+      // qui si imposta solo ciò che si vede nel primo frame, al resto pensa
+      // src/lib/aspetto.ts appena React monta.
+      (function () {
+        try {
+          var salvato = localStorage.getItem('nutnote_aspetto');
+          var pref = salvato ? JSON.parse(salvato) : {};
+          var tema = pref.tema || localStorage.getItem('theme') || 'light';
+          if (tema === 'auto') {
+            tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          var radice = document.documentElement;
+          radice.setAttribute('data-theme', tema);
+          radice.setAttribute('data-effetti', pref.effetti || 'completi');
+          if (pref.dimensioneInterfaccia) {
+            radice.style.setProperty('--text-base', pref.dimensioneInterfaccia + 'px');
+          }
+          if (pref.accento) {
+            radice.style.setProperty('--accent', pref.accento);
+          }
+        } catch (e) {
+          // Preferenze illeggibili: si prosegue con il tema chiaro predefinito.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

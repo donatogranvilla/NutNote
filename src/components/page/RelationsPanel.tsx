@@ -234,7 +234,7 @@ export function RelationsPanel({ pageId, rootClientId, clientTitle }: RelationsP
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease',
+            transition: 'var(--transition-interactive)',
           }}
         >
           {isAdding ? <X size={14} /> : <Plus size={14} />}
@@ -372,7 +372,7 @@ export function RelationsPanel({ pageId, rootClientId, clientTitle }: RelationsP
                             ? '1px solid var(--accent)' 
                             : '1px solid transparent',
                           opacity: isAlreadyConnected ? 0.6 : 1,
-                          transition: 'all 0.12s ease',
+                          transition: 'var(--transition-interactive)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>

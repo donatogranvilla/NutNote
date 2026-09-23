@@ -233,7 +233,7 @@ export default function TypeListPage({ type: propType }: TypeListPageProps) {
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-lg)',
-                zIndex: 100,
+                zIndex: 'var(--z-menu)',
                 padding: '4px'
               }}>
                 <button

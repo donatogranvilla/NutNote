@@ -96,7 +96,7 @@ export function QuickCreateModal({
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'var(--glass-blur)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--z-modal)'
     }} onClick={onClose}>
       <motion.div 
         variants={modalVariants} initial="hidden" animate="visible" exit="exit"
@@ -200,7 +200,7 @@ export function QuickCreateModal({
                               color: isSelected ? '#fff' : 'var(--text-primary)',
                               border: `1px solid ${isSelected ? t.color : 'var(--border)'}`,
                               boxShadow: isSelected ? 'var(--shadow-md)' : 'none',
-                              transition: 'all var(--transition-fast)'
+                              transition: 'var(--transition-interactive)'
                             }}
                           >
                             <span style={{ fontSize: '16px', opacity: isSelected ? 1 : 0.7 }}>{t.icon}</span>
@@ -232,7 +232,7 @@ export function QuickCreateModal({
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 24px',
                 borderRadius: 'var(--radius-full)', backgroundColor: 'var(--accent)', color: '#fff',
-                fontWeight: 600, opacity: title.trim() ? 1 : 0.6, transition: 'all 0.2s',
+                fontWeight: 600, opacity: title.trim() ? 1 : 0.6, transition: 'var(--transition-interactive)',
                 boxShadow: title.trim() ? 'var(--shadow-md)' : 'none'
               }}
             >

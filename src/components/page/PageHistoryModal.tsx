@@ -83,7 +83,7 @@ export function PageHistoryModal({ pageId, pageTitle, isOpen, onClose }: PageHis
       backgroundColor: 'rgba(0, 0, 0, 0.55)',
       backdropFilter: 'blur(4px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000,
+      zIndex: 'var(--z-modal)',
       padding: '20px',
     }}>
       <div style={{

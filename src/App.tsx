@@ -6,6 +6,7 @@ import PageDetailPage from './pages/PageDetailPage';
 import { CloudMapView } from './pages/CloudMapView';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UserProvider, useUser } from './contexts/UserContext';
+import { AspettoProvider } from './contexts/AspettoContext';
 import UserSelectPage from './pages/UserSelectPage';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
@@ -72,9 +73,11 @@ function App() {
   return (
     <ErrorBoundary fallbackTitle="Errore critico di NutNote">
       <QueryClientProvider client={queryClient}>
-        <UserProvider>
-          <MainApp />
-        </UserProvider>
+        <AspettoProvider>
+          <UserProvider>
+            <MainApp />
+          </UserProvider>
+        </AspettoProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
