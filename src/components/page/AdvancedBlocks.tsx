@@ -4,20 +4,36 @@ import {
   Code2, Eye, Download, Copy, Check, ExternalLink, RefreshCw,
   Search, ArrowRight, AlertCircle, Sparkles, FileSpreadsheet
 } from 'lucide-react';
-import mermaid from 'mermaid';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import { pagesApi, pageTypesApi } from '../../lib/api';
 import type { Page, PageType } from '../../lib/types';
 
-// Initialize mermaid with neutral, dark-mode aware theme
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'default',
-  securityLevel: 'loose',
-  flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
-  sequence: { useMaxWidth: true },
-});
+/** Promessa memorizzata: Mermaid si carica e si configura una volta sola per sessione. */
+let mermaidPronto: Promise<typeof import('mermaid').default> | null = null;
+
+/**
+ * Carica Mermaid solo quando c'è davvero un diagramma da disegnare.
+ *
+ * Mermaid si porta dietro elk, cytoscape e katex: oltre 2 MB che, con un import
+ * in cima al file, finivano nel pacchetto iniziale e venivano scaricati e
+ * inizializzati anche da chi non apre mai un diagramma.
+ */
+function caricaMermaid() {
+  if (!mermaidPronto) {
+    mermaidPronto = import('mermaid').then((modulo) => {
+      modulo.default.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+        sequence: { useMaxWidth: true },
+      });
+      return modulo.default;
+    });
+  }
+  return mermaidPronto;
+}
 
 // ─────────────────────────────────────────────────────────────
 // 1. BLOCCO DIAGRAMMI & FLOWCHART (MERMAID.JS)
@@ -105,6 +121,7 @@ export function MermaidBlock({
     try {
       // Clear any previous mermaid artifacts
       const id = `mermaid-render-${Date.now()}`;
+      const mermaid = await caricaMermaid();
       const { svg } = await mermaid.render(id, sourceCode.trim());
       setSvgContent(svg);
     } catch (err: any) {

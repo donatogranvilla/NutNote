@@ -671,7 +671,19 @@ function BlockRow({ item, index, editable, shouldFocus, onFocused, onUpdate, onI
           {item.type === 'image' && (
             <div style={{ margin: '6px 0' }}>
               {item.src ? (
-                <img src={item.src} alt="" style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                /* Caricamento differito: in una pagina lunga il browser scarica e
+                   decodifica solo le immagini che stanno per entrare nello schermo. */
+                <img
+                  src={item.src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    maxWidth: 'var(--editor-image-max-width, 100%)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1px solid var(--border)',
+                  }}
+                />
               ) : (
                 <div style={{ padding: '20px', border: '1px dashed var(--border)', borderRadius: '8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
                   Inserisci l'URL dell'immagine nel campo sottostante
@@ -794,7 +806,7 @@ function BlockRow({ item, index, editable, shouldFocus, onFocused, onUpdate, onI
                       top: '100%',
                       right: 0,
                       width: 190,
-                      zIndex: 500,
+                      zIndex: 'var(--z-menu)',
                       backgroundColor: 'var(--bg-surface)',
                       border: '1px solid var(--border)',
                       borderRadius: '10px',
@@ -859,7 +871,7 @@ function SlashPalette({ query, onSelect, onClose }: { query: string; onSelect: (
   return (
     <div style={{
       position: 'absolute', top: '100%', left: 0, width: 260,
-      maxHeight: 240, overflowY: 'auto', zIndex: 1000,
+      maxHeight: 240, overflowY: 'auto', zIndex: 'var(--z-menu)',
       backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)',
       borderRadius: '8px', boxShadow: 'var(--shadow-lg)', padding: '4px',
     }}>
@@ -893,7 +905,7 @@ const actionBtnStyle: React.CSSProperties = {
   color: 'var(--text-secondary)',
   cursor: 'pointer',
   padding: 0,
-  transition: 'all 0.15s ease',
+  transition: 'var(--transition-interactive)',
 };
 
 const menuItem = (active: boolean): React.CSSProperties => ({

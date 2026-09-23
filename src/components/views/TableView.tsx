@@ -40,7 +40,9 @@ export function TableView({ items, schema, onReorder, onPropertyChange }: TableV
     }
   };
 
-  const columns = schema.filter(p => p.showInTable);
+  // Le colonne dipendono solo dallo schema del tipo, che cambia di rado: senza
+  // memoria verrebbero ricalcolate anche a ogni passo di un trascinamento.
+  const columns = React.useMemo(() => schema.filter(p => p.showInTable), [schema]);
 
   return (
     <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflowX: 'auto', backgroundColor: 'var(--bg-surface)' }}>
