@@ -1,7 +1,6 @@
-# NutNote 🥜
+# NutNote 🥜📝
 
-> Note e gestione documentale per l'ufficio: locali, tue, senza cloud di terzi.
-> Desktop **Tauri 2** + **Rust** + **SQLite**, interfaccia **React 19** + **TypeScript**.
+> Sviluppato con **Tauri 2**, **Rust**, **SQLite**, **React 19**, **TypeScript** e **TipTap**.
 
 ---
 
