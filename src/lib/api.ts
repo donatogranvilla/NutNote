@@ -548,3 +548,75 @@ export const serverApi = {
   start: (port?: number) => invoke<ServerStatus>('start_server', { portOverride: port || null }),
   stop: () => invoke<ServerStatus>('stop_server', {}),
 };
+
+export interface SavedView {
+  id: string;
+  name: string;
+  displayType: 'table' | 'kanban' | 'list' | 'calendar' | 'gallery';
+  filters: string;
+  sortBy: string;
+  groupBy?: string | null;
+  visibleProperties: string;
+  scopeType: 'global' | 'type' | 'page';
+  scopeId?: string | null;
+  isDefault: boolean;
+  position: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateViewRequest {
+  name: string;
+  displayType: string;
+  filters?: string;
+  sortBy?: string;
+  groupBy?: string | null;
+  visibleProperties?: string;
+  scopeType?: string;
+  scopeId?: string | null;
+  isDefault?: boolean;
+}
+
+/**
+ * Viste salvate: una configurazione di elenco a cui si è dato un nome.
+ *
+ * Filtri e ordinamenti viaggiano come JSON in stringa: la loro forma la decide
+ * l'interfaccia, così aggiungere un criterio non richiede di cambiare lo schema
+ * del database né i tipi lato Rust.
+ */
+export const viewsApi = {
+  getForScope: async (scopeType: string, scopeId?: string | null): Promise<SavedView[]> => {
+    try {
+      if (getBackendMode() === 'remote') {
+        const q = new URLSearchParams({ scopeType });
+        if (scopeId) q.set('scopeId', scopeId);
+        return await remoteFetch<SavedView[]>(`/api/views?${q.toString()}`);
+      }
+      return await invoke<SavedView[]>('get_views', { scopeType, scopeId: scopeId ?? null });
+    } catch {
+      return [];
+    }
+  },
+
+  create: async (payload: CreateViewRequest): Promise<SavedView> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<SavedView>('/api/views', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    return invoke<SavedView>('create_view', { payload });
+  },
+
+  update: async (payload: { id: string } & Partial<CreateViewRequest> & { position?: number }): Promise<SavedView> => {
+    if (getBackendMode() === 'remote') {
+      return remoteFetch<SavedView>(`/api/views/${payload.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    }
+    return invoke<SavedView>('update_view', { payload });
+  },
+
+  remove: async (id: string): Promise<void> => {
+    if (getBackendMode() === 'remote') {
+      await remoteFetch<boolean>(`/api/views/${id}`, { method: 'DELETE' });
+      return;
+    }
+    await invoke('delete_view', { id });
+  },
+};

@@ -19,6 +19,7 @@ interface MockState {
   blocks: Record<string, any[]>;
   chatMessages: Record<string, any[]>;
   relations: any[];
+  views: any[];
 }
 
 const STORAGE_KEY = 'nutnote_browser_mock_state_v4';
@@ -401,6 +402,7 @@ function getDefaultState(): MockState {
         properties: { section: 'Deutsch', language: 'de' },
       },
     ],
+    views: [],
     relations: [
       {
         id: 'rel-mock-1',
@@ -1310,6 +1312,57 @@ export function setupTauriMock() {
           { name: 'Contratto firmato.pdf', path: `${base}\\Contratto firmato.pdf`, is_dir: false, size_bytes: 189432, extension: 'pdf', modified_str: String(adesso) },
           { name: 'Schema impianto.png', path: `${base}\\Schema impianto.png`, is_dir: false, size_bytes: 512000, extension: 'png', modified_str: String(adesso) },
         ];
+      }
+
+      case 'get_views': {
+        const ambito = args.scopeType || 'global';
+        return (state.views || []).filter(
+          (v: any) => v.scopeType === ambito && (!args.scopeId || v.scopeId === args.scopeId),
+        );
+      }
+
+      case 'create_view': {
+        const p = args.payload || {};
+        if (!state.views) state.views = [];
+        const vista = {
+          id: `view-${Date.now()}`,
+          name: p.name,
+          displayType: p.displayType,
+          filters: p.filters || '[]',
+          sortBy: p.sortBy || '[]',
+          groupBy: p.groupBy || null,
+          visibleProperties: p.visibleProperties || '[]',
+          scopeType: p.scopeType || 'global',
+          scopeId: p.scopeId || null,
+          isDefault: !!p.isDefault,
+          position: state.views.length,
+          createdBy: state.activeUserId || 'user-admin',
+          createdAt: new Date().toISOString(),
+        };
+        // Una sola predefinita per ambito, come fa il vincolo lato Rust.
+        if (vista.isDefault) {
+          state.views.forEach((v: any) => {
+            if (v.scopeType === vista.scopeType && v.scopeId === vista.scopeId) v.isDefault = false;
+          });
+        }
+        state.views.push(vista);
+        saveState(state);
+        return vista;
+      }
+
+      case 'update_view': {
+        const p = args.payload || {};
+        const vista = (state.views || []).find((v: any) => v.id === p.id);
+        if (!vista) throw new Error('Vista non trovata');
+        Object.assign(vista, p);
+        saveState(state);
+        return vista;
+      }
+
+      case 'delete_view': {
+        state.views = (state.views || []).filter((v: any) => v.id !== args.id);
+        saveState(state);
+        return true;
       }
 
       case 'open_path_in_os': {

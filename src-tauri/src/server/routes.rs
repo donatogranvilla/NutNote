@@ -24,6 +24,7 @@ use crate::commands::{
     teams::{self, CreateTeamPayload, Team, UpdateTeamPayload},
     chat::{self, ChatMessage, CreateChatMessagePayload},
     changelog::{self, ChangeLogEntry},
+    views::{self, CreateViewPayload, UpdateViewPayload, ViewData},
 };
 use crate::server::identity::CurrentUser;
 use crate::server::ServerAppState;
@@ -448,6 +449,57 @@ async fn create_chat_route(
     Ok(Json(res))
 }
 
+// Viste salvate
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AmbitoVisteQuery {
+    pub scope_type: Option<String>,
+    pub scope_id: Option<String>,
+}
+
+async fn get_views_route(
+    State(state): State<Arc<ServerAppState>>,
+    Query(q): Query<AmbitoVisteQuery>,
+) -> Result<Json<Vec<ViewData>>, (StatusCode, String)> {
+    let conn = state.db.lock().map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let res = views::get_views_internal(&conn, q.scope_type.as_deref(), q.scope_id.as_deref())
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    Ok(Json(res))
+}
+
+async fn create_view_route(
+    State(state): State<Arc<ServerAppState>>,
+    user: CurrentUser,
+    Json(payload): Json<CreateViewPayload>,
+) -> Result<Json<ViewData>, (StatusCode, String)> {
+    let conn = state.db.lock().map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let res = views::create_view_internal(&conn, payload, user.author_id()?)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    Ok(Json(res))
+}
+
+async fn update_view_route(
+    State(state): State<Arc<ServerAppState>>,
+    Path(id): Path<String>,
+    Json(mut payload): Json<UpdateViewPayload>,
+) -> Result<Json<ViewData>, (StatusCode, String)> {
+    payload.id = id;
+    let conn = state.db.lock().map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let res = views::update_view_internal(&conn, payload)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
+    Ok(Json(res))
+}
+
+async fn delete_view_route(
+    State(state): State<Arc<ServerAppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<bool>, (StatusCode, String)> {
+    let conn = state.db.lock().map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    views::delete_view_internal(&conn, &id)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    Ok(Json(true))
+}
+
 // ChangeLog
 async fn get_changelog_route(
     State(state): State<Arc<ServerAppState>>,
@@ -581,6 +633,9 @@ pub fn build_router(state: Arc<ServerAppState>) -> Router {
         // Chat
         .route("/api/chat", post(create_chat_route))
         .route("/api/chat/{page_id}", get(get_chat_route))
+        // Viste salvate
+        .route("/api/views", get(get_views_route).post(create_view_route))
+        .route("/api/views/{id}", put(update_view_route).delete(delete_view_route))
         // ChangeLog
         .route("/api/changelog/{entity_type}/{entity_id}", get(get_changelog_route))
         .route("/api/changelog/restore", post(restore_changelog_route))

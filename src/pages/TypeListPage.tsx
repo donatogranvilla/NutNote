@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePages, useCreatePage, useUpdatePage } from '../hooks/usePages';
 import { usePageType } from '../hooks/usePageTypes';
 import { TableView } from '../components/views/TableView';
+import { BarraViste } from '../components/views/BarraViste';
 import { KanbanView } from '../components/views/KanbanView';
 import { exportTableToCsv, exportTableToExcel } from '../lib/export';
 import { 
@@ -337,6 +338,18 @@ export default function TypeListPage({ type: propType }: TypeListPageProps) {
           </button>
         </div>
       )}
+
+      {/* Viste salvate del tipo corrente */}
+      <div style={{ marginBottom: 'var(--sp-4)' }}>
+        <BarraViste
+          typeName={typeName}
+          configurazioneCorrente={{ displayType: viewType, filtro: filterQuery }}
+          onApplica={(configurazione) => {
+            setViewType(configurazione.displayType);
+            setFilterQuery(configurazione.filtro);
+          }}
+        />
+      </div>
 
       {/* Main View Body */}
       {isLoading || typeLoading ? (

@@ -9,3 +9,4 @@ pub mod files;
 pub mod chat;
 pub mod changelog;
 pub mod config;
+pub mod views;
